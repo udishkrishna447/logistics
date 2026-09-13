@@ -1,1105 +1,309 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgriNex - Logistics & Supply Chain Module</title>
+  <title>AgriNex - Agricultural Logistics Portal Hub</title>
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+    }
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/logistics.css" />
-  
-  <!-- Leaflet Map CSS for Real Live GPS Tracking -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #0f172a;
+      color: #fff;
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 24px;
+      flex-grow: 1;
+    }
+
+    .hero-box {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .hero-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      max-width: 680px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.5;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .module-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: #cbd5e1;
+    }
+
+    .module-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .card-farmer::before { background: #16a34a; }
+    .card-buyer::before { background: #4f46e5; }
+    .card-transporter::before { background: #d97706; }
+    .card-admin::before { background: #0f172a; }
+
+    .module-icon-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+    }
+
+    .icon-farmer { background: #f0fdf4; }
+    .icon-buyer { background: #eef2ff; }
+    .icon-transporter { background: #fffbeb; }
+    .icon-admin { background: #f1f5f9; }
+
+    .module-role-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .module-features-list {
+      list-style: none;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+
+    .module-features-list li {
+      margin-bottom: 6px;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .launch-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s ease;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .btn-farmer { background: #16a34a; }
+    .btn-farmer:hover { background: #15803d; }
+
+    .btn-buyer { background: #4f46e5; }
+    .btn-buyer:hover { background: #4338ca; }
+
+    .btn-transporter { background: #d97706; }
+    .btn-transporter:hover { background: #b45309; }
+
+    .btn-admin { background: #0f172a; }
+    .btn-admin:hover { background: #1e293b; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Floating Toast Notifications Container -->
-  <div class="toast-container"></div>
+  <header>
+    <div>
+      <div class="brand-title">🚚 AgriNex Logistics Ecosystem</div>
+      <div class="brand-subtitle">Shared On-Demand Agricultural Supply Chain Platform</div>
+    </div>
+    <div style="font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.15);">
+      🌐 English · हिन्दी · தமிழ் Enabled
+    </div>
+  </header>
 
-  <!-- Floating Rural Farmer Helpline & WhatsApp Button -->
-  <button class="floating-help-btn" onclick="openHelplineModal()" title="Need Help? Open Rural Helpline">
-    <span data-i18n="floatingHelplineText">📞 Rural Helpline & IVR</span>
-  </button>
+  <main class="container">
+    <div class="hero-box">
+      <h1 class="hero-title">Select Stakeholder Logistics Portal</h1>
+      <p class="hero-desc">
+        Dedicated, standalone logistics applications tailored for farmers, mandi buyers, truck drivers, and system administrators.
+      </p>
+    </div>
 
-  <div class="app-container">
-    
-    <!-- SIDEBAR NAVIGATION -->
-    <aside class="sidebar">
-      <div>
-        <div class="sidebar-brand">
-          <div class="brand-icon-box">🚛</div>
-          <div>
-            <div class="brand-title" data-i18n="brandTitle">Agri<span>Nex</span></div>
-            <div class="brand-subtitle" data-i18n="brandSubtitle">Logistics & Supply Chain</div>
-          </div>
-        </div>
-
-        <ul class="sidebar-menu">
-          <li class="sidebar-item active">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-            <span data-i18n="navOverview">Overview</span>
-          </li>
-          <li class="sidebar-item" onclick="openModal('modal-create-pickup')">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span data-i18n="navBookTransport">Book Transport</span>
-          </li>
-          <li class="sidebar-item" onclick="document.getElementById('active-shipments-section').scrollIntoView({behavior:'smooth'})">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14v10Z"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
-            <span data-i18n="navActiveShipments">Active Shipments</span>
-          </li>
-          <li class="sidebar-item" onclick="openTrackingModal(LOGISTICS_DATA.bookings[0].trackingId)">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span data-i18n="navLiveTracking">Live Tracking</span>
-          </li>
-          <li class="sidebar-item" onclick="document.getElementById('storage-discovery-section').scrollIntoView({behavior:'smooth'})">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-            <span data-i18n="navStorageDiscovery">Storage Discovery</span>
-          </li>
-          <li class="sidebar-item" onclick="document.getElementById('shared-logistics-section').scrollIntoView({behavior:'smooth'})">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span data-i18n="navSharedLogistics">Shared Logistics (Cluster)</span>
-          </li>
-          <li class="sidebar-item" onclick="document.getElementById('cold-storage-branch-section').scrollIntoView({behavior:'smooth'})">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/><path d="m19.07 4.93-14.14 14.14"/></svg>
-            <span data-i18n="navColdStorageBranch">Cold Storage Branch</span>
-          </li>
-          <li class="sidebar-item" onclick="document.getElementById('idle-gigs-section').scrollIntoView({behavior:'smooth'})">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span data-i18n="navQuickGig">Quick-Gig (Swiggy/Zomato)</span>
-          </li>
-          <li class="sidebar-item" onclick="openHelplineModal()">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span data-i18n="navHelpline">Voice & Helpline</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="user-badge-mini">
-          <div class="user-avatar-mini">UK</div>
-          <div>
-            <div style="color: #fff; font-weight: 700;">Udish Krishna</div>
-            <div style="color: #94a3b8; font-size: 0.72rem;" data-i18n="farmerBadgeRole">Farmer / FPO Producer</div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- MAIN WRAPPER -->
-    <main class="main-wrapper">
+    <div class="modules-grid">
       
-      <!-- TOP NAVBAR -->
-      <header class="top-navbar">
-        <div class="nav-left">
-          <h1 class="page-title" data-i18n="pageTitle">AgriNex Logistics Desk</h1>
-          
-          <!-- Role Switcher -->
-          <div class="role-switcher">
-            <button class="role-btn active" data-role="farmer" data-i18n="roleFarmer">Farmer</button>
-            <button class="role-btn" data-role="fpo" data-i18n="roleFpo">FPO Desk</button>
-            <button class="role-btn" data-role="buyer" data-i18n="roleBuyer">Buyer</button>
-            <button class="role-btn" data-role="transporter" data-i18n="roleTransporter">Transporter</button>
-            <button class="role-btn" data-role="admin" data-i18n="roleAdmin">Admin</button>
-          </div>
+      <!-- 1. FARMER MODULE -->
+      <a href="./farmer%20log%20mod/index.html" class="module-card card-farmer">
+        <div>
+          <div class="module-icon-box icon-farmer">🌾</div>
+          <div class="module-role-title">Farmer Portal</div>
+          <ul class="module-features-list">
+            <li>✓ Farmgate pickup booking & ₹/kg transparent quotes</li>
+            <li>✓ Shared On-Demand 1.2T Cluster (Save 54% freight)</li>
+            <li>✓ Cold Storage Branch (+21 days shelf-life safeguard)</li>
+            <li>✓ Swiggy/Zomato Quick-Gig downtime fleet</li>
+            <li>✓ Google Maps live GPS tracking with radar wave</li>
+            <li>✓ OTP proof of delivery & 5-star driver rating</li>
+          </ul>
         </div>
+        <div class="launch-btn btn-farmer">Launch Farmer Module ➔</div>
+      </a>
 
-        <div class="nav-right">
-          <!-- Multilingual Language Switcher (EN, HI, TA) -->
-          <div class="lang-switcher-pill" title="Switch Language">
-            <span style="font-size: 0.85rem; margin-left: 4px;">🌐</span>
-            <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
-            <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हिन्दी</button>
-            <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">தமிழ்</button>
-          </div>
-
-          <button class="btn btn-primary" onclick="openModal('modal-create-pickup')">
-            <span data-i18n="btnBookPickup">+ Book Pickup</span>
-          </button>
+      <!-- 2. BUYER MODULE -->
+      <a href="./buyer%20log%20mod/index.html" class="module-card card-buyer">
+        <div>
+          <div class="module-icon-box icon-buyer">🏭</div>
+          <div class="module-role-title">Buyer & Processor</div>
+          <ul class="module-features-list">
+            <li>✓ Inbound shipments radar with real-time truck ETAs</li>
+            <li>✓ Gate entry, weighbridge tare/gross & bay allocation</li>
+            <li>✓ Produce quality inspection & grading terminal</li>
+            <li>✓ Digital POD verification with touchscreen signature</li>
+            <li>✓ Instant escrow release upon verified delivery</li>
+            <li>✓ Inward tax invoices & goods receipt notes (GRN)</li>
+          </ul>
         </div>
-      </header>
+        <div class="launch-btn btn-buyer">Launch Buyer Module ➔</div>
+      </a>
 
-      <!-- CONTENT BODY -->
-      <div class="content-body">
-        
-        <!-- Onboarding How-It-Works Guide Banner (User-Friendly Guidance) -->
-        <div class="how-it-works-banner">
-          <div>
-            <div style="font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-              <span data-i18n="guideTitle">🌾 Simple 4-Step Farmgate Logistics Workflow</span>
-            </div>
-            <div class="how-it-works-steps">
-              <div class="step-chip">
-                <strong>1</strong>
-                <span data-i18n="guideStep1">Create Pickup & Get Instant Fare</span>
-              </div>
-              <div class="step-chip">
-                <strong>2</strong>
-                <span data-i18n="guideStep2">Assign Verified Transporter</span>
-              </div>
-              <div class="step-chip">
-                <strong>3</strong>
-                <span data-i18n="guideStep3">Track Live GPS & Temperature</span>
-              </div>
-              <div class="step-chip">
-                <strong>4</strong>
-                <span data-i18n="guideStep4">Confirm Delivery with OTP & POD</span>
-              </div>
-            </div>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="openModal('modal-create-pickup')" style="white-space: nowrap; flex-shrink: 0;">
-            <span data-i18n="btnQuickBookNow">⚡ Quick Book Now</span>
-          </button>
+      <!-- 3. TRANSPORTER / DRIVER MODULE -->
+      <a href="./transporter%20log%20mod/index.html" class="module-card card-transporter">
+        <div>
+          <div class="module-icon-box icon-transporter">🚚</div>
+          <div class="module-role-title">Transporter / Driver</div>
+          <ul class="module-features-list">
+            <li>✓ Driver console with Tata Ace EV battery telematics</li>
+            <li>✓ Trip dispatch board (Accept / Decline offers)</li>
+            <li>✓ Turn-by-turn multi-stop cluster route navigator</li>
+            <li>✓ Tap-to-update milestone progress stepper</li>
+            <li>✓ Swiggy/Zomato gig downtime online toggle</li>
+            <li>✓ Driver wallet with instant UPI bank transfer</li>
+          </ul>
         </div>
+        <div class="launch-btn btn-transporter">Launch Driver Console ➔</div>
+      </a>
 
-        <!-- Role Context Notice -->
-        <div id="role-context-banner" class="alert-box alert-info" data-i18n="bannerFarmer">
-          👤 <strong>Farmer View:</strong> Book individual farmgate pickups, review per-kg transport fares, track live location, and inspect proof-of-delivery receipts.
+      <!-- 4. ADMIN MODULE -->
+      <a href="./admin%20log%20mod/index.html" class="module-card card-admin">
+        <div>
+          <div class="module-icon-box icon-admin">🛡️</div>
+          <div class="module-role-title">Admin Command Tower</div>
+          <ul class="module-features-list">
+            <li>✓ Real-time logistics KPI command dashboard</li>
+            <li>✓ Transporter & driver KYC verification hub</li>
+            <li>✓ Regional corridor telematics (NH 544 live map)</li>
+            <li>✓ Dispute triage & emergency backup dispatch</li>
+            <li>✓ Freight tariff caps & 50% Operation Greens subsidy</li>
+            <li>✓ Cold storage WDRA compliance & audit logs</li>
+          </ul>
         </div>
+        <div class="launch-btn btn-admin">Launch Command Tower ➔</div>
+      </a>
 
-        <!-- STATS ROW -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon-wrapper stat-icon-amber">🚚</div>
-            <div class="stat-info">
-              <span class="stat-label" data-i18n="statActiveShipments">Active Shipments</span>
-              <span id="stat-active-shipments" class="stat-value">1</span>
-              <span class="stat-trend trend-up" data-i18n="statActiveSub">● In Transit</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon-wrapper stat-icon-green">✓</div>
-            <div class="stat-info">
-              <span class="stat-label" data-i18n="statDeliveredToday">Delivered Today</span>
-              <span id="stat-delivered-count" class="stat-value">1</span>
-              <span class="stat-trend trend-up" data-i18n="statDeliveredSub">100% POD Verified</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon-wrapper stat-icon-blue">🛡️</div>
-            <div class="stat-info">
-              <span class="stat-label" data-i18n="statVerifiedFleet">Verified Transporters</span>
-              <span id="stat-fleet-count" class="stat-value">4</span>
-              <span class="stat-trend trend-up" data-i18n="statFleetSub">All GPS-Enabled</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon-wrapper stat-icon-cyan">❄️</div>
-            <div class="stat-info">
-              <span class="stat-label" data-i18n="statStorageCap">Storage Capacity</span>
-              <span id="stat-storage-avail" class="stat-value">1,270 T</span>
-              <span class="stat-trend" data-i18n="statStorageSub">Near Mandis & Farmgate</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================================================== -->
-        <!-- SHARED ON-DEMAND AGRICULTURAL LOGISTICS & FARMER CLUSTER -->
-        <!-- ==================================================== -->
-        <div id="shared-logistics-section" class="card" style="border-left: 4px solid var(--primary); margin-bottom: 24px;">
-          <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: flex-start;">
-            <div>
-              <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <span data-i18n="secSharedLogisticsTitle">🚚 Shared On-Demand Agricultural Logistics</span>
-              </div>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;" data-i18n="secSharedLogisticsSubtitle">
-                AI-Powered Load Pooling & Multi-Stop Farmgate Collection (Replaces separate empty trips with unified shared vehicles)
-              </p>
-            </div>
-            <span class="badge" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; font-weight: 800;" data-i18n="badgeMultiStop">
-              3-Stop Optimized Route
-            </span>
-          </div>
-
-          <!-- Visual AI Flowchart Decision Nodes -->
-          <div class="shared-flow-container">
-            <div class="flow-step-box active">
-              <div class="flow-step-num">1</div>
-              <div class="flow-step-title" data-i18n="flowStepOrderConfirmed">Order Confirmed</div>
-            </div>
-            <div class="flow-step-arrow">➔</div>
-            <div class="flow-step-box active">
-              <div class="flow-step-num">2</div>
-              <div class="flow-step-title" data-i18n="flowStepAiChecks">AI Checks (Qty, Dist, Crop)</div>
-            </div>
-            <div class="flow-step-arrow">➔</div>
-            <div class="flow-step-box active-highlight">
-              <div class="flow-step-num">3</div>
-              <div class="flow-step-title" data-i18n="flowStepClusterDecision">Farmer Cluster? [YES]</div>
-            </div>
-            <div class="flow-step-arrow">➔</div>
-            <div class="flow-step-box active">
-              <div class="flow-step-num">4</div>
-              <div class="flow-step-title" data-i18n="flowStepPoolLoads">Pool Loads (1.2T Tata Ace)</div>
-            </div>
-            <div class="flow-step-arrow">➔</div>
-            <div class="flow-step-box active">
-              <div class="flow-step-num">5</div>
-              <div class="flow-step-title" data-i18n="flowStepRouteOpt">Route Opt. (Stop A➔B➔C)</div>
-            </div>
-            <div class="flow-step-arrow">➔</div>
-            <div class="flow-step-box active">
-              <div class="flow-step-num">6</div>
-              <div class="flow-step-title" data-i18n="flowStepLiveGps">Live GPS & POD</div>
-            </div>
-          </div>
-
-          <!-- 🔥 Farmer Cluster 1.2 Tonne Combination Box -->
-          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1.5px solid #86efac; border-radius: var(--radius-sm); padding: 18px; margin-top: 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
-              <div>
-                <h3 style="font-size: 1.15rem; color: var(--primary); margin: 0; font-weight: 800;" data-i18n="clusterTitle">
-                  🔥 Strong Combination: 3-Farmer Cluster (1.2 Tonnes)
-                </h3>
-                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 3px;" data-i18n="clusterDesc">
-                  Nearby small farmers pooling their produce into a single Tata Ace EV to avoid expensive separate trips.
-                </div>
-              </div>
-              <div style="text-align: right;">
-                <span class="badge badge-success" style="font-size: 0.85rem; padding: 6px 12px;" data-i18n="lblClusterTotalLoad">
-                  Combined Cluster Load: 1.2 Tonnes (1,200 kg)
-                </span>
-              </div>
-            </div>
-
-            <!-- 3 Farmer Cards Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px;">
-              
-              <!-- Farmer A -->
-              <div style="background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px; border-left: 4px solid #16a34a;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <strong style="color: var(--primary);">Farmer A · Ravi Kumar</strong>
-                  <span class="badge" style="background: #ecfdf5; color: #15803d; font-size: 0.7rem;">Stop 1: 08:00 AM</span>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Village: Thindal · 350 kg (14 Crates)</div>
-                <div style="margin-top: 10px; font-size: 0.8rem; display: flex; justify-content: space-between; background: #f8fafc; padding: 6px 8px; border-radius: 4px;">
-                  <span>Standalone: <del>₹1,200</del></span>
-                  <strong style="color: #16a34a;">Share: ₹481 (Save ₹719)</strong>
-                </div>
-              </div>
-
-              <!-- Farmer B -->
-              <div style="background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px; border-left: 4px solid #2563eb;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <strong style="color: #2563eb;">Farmer B · Selvam P.</strong>
-                  <span class="badge" style="background: #eff6ff; color: #1d4ed8; font-size: 0.7rem;">Stop 2: 08:20 AM</span>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Village: Villarasampatti · 450 kg (18 Crates)</div>
-                <div style="margin-top: 10px; font-size: 0.8rem; display: flex; justify-content: space-between; background: #f8fafc; padding: 6px 8px; border-radius: 4px;">
-                  <span>Standalone: <del>₹1,100</del></span>
-                  <strong style="color: #2563eb;">Share: ₹618 (Save ₹482)</strong>
-                </div>
-              </div>
-
-              <!-- Farmer C -->
-              <div style="background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 14px; border-left: 4px solid #d97706;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                  <strong style="color: #d97706;">Farmer C · Murugan S.</strong>
-                  <span class="badge" style="background: #fffbeb; color: #b45309; font-size: 0.7rem;">Stop 3: 08:45 AM</span>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Village: Perundurai · 400 kg (16 Crates)</div>
-                <div style="margin-top: 10px; font-size: 0.8rem; display: flex; justify-content: space-between; background: #f8fafc; padding: 6px 8px; border-radius: 4px;">
-                  <span>Standalone: <del>₹1,300</del></span>
-                  <strong style="color: #d97706;">Share: ₹551 (Save ₹749)</strong>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Savings Bar & 1-Click Launch Button -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: #ffffff; padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-default);">
-              <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                <div>
-                  <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;" data-i18n="lblCostSeparateTrips">3 Separate Trips Cost:</div>
-                  <div style="font-size: 1.1rem; font-weight: 800; color: var(--status-danger);"><del>₹3,600</del></div>
-                </div>
-                <div style="font-size: 1.2rem; color: var(--text-muted);">➔</div>
-                <div>
-                  <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;" data-i18n="lblCostPooledVehicle">Shared Pooled Vehicle:</div>
-                  <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">₹1,650</div>
-                </div>
-                <div style="border-left: 2px solid var(--border-default); padding-left: 16px;">
-                  <div style="font-size: 0.72rem; color: #15803d; text-transform: uppercase; font-weight: 800;" data-i18n="lblNetSavings">Net Farmer Savings:</div>
-                  <div style="font-size: 1.25rem; font-weight: 800; color: #16a34a;">₹1,950 (54% Saved)</div>
-                </div>
-              </div>
-
-              <button type="button" class="btn btn-primary" onclick="dispatchClusterTrip()" style="font-weight: 800; padding: 10px 20px;">
-                <span data-i18n="btnDispatchCluster">🚀 Dispatch Shared Cluster Vehicle (1.2T)</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- MAIN DASHBOARD CONTENT (Two-Column Layout) -->
-        <div class="dashboard-grid">
-          
-          <!-- LEFT COLUMN: Active Shipments Table with Search & Filter -->
-          <div class="card" id="active-shipments-section">
-            <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
-              <div class="card-title">
-                <span data-i18n="secActiveShipments">📦 Active Shipments & Movement Status</span>
-              </div>
-
-              <!-- Quick Search Input -->
-              <div class="search-input-box">
-                <span class="search-icon-inside">🔍</span>
-                <input type="text" class="form-control" placeholder="Search ID, crop, driver..." data-i18n-placeholder="searchPlaceholder" oninput="handleShipmentSearch(this.value)" />
-              </div>
-            </div>
-
-            <!-- Filter Chips Bar -->
-            <div class="filter-bar" style="margin-bottom: 14px;">
-              <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">FILTER:</span>
-              <button class="filter-chip active" data-filter="all" onclick="setShipmentFilter('all')" data-i18n="filterAll">All Shipments</button>
-              <button class="filter-chip" data-filter="transit" onclick="setShipmentFilter('transit')" data-i18n="filterTransit">🚚 In Transit</button>
-              <button class="filter-chip" data-filter="delivered" onclick="setShipmentFilter('delivered')" data-i18n="filterDelivered">✅ Delivered</button>
-              <button class="filter-chip" data-filter="issues" onclick="setShipmentFilter('issues')" data-i18n="filterExceptions">⚠️ Exceptions</button>
-            </div>
-
-            <div class="table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th data-i18n="thTrackingId">Tracking / Lot ID</th>
-                    <th data-i18n="thCommodity">Commodity</th>
-                    <th data-i18n="thRoute">Route</th>
-                    <th data-i18n="thDriverVehicle">Driver & Vehicle</th>
-                    <th data-i18n="thCostBreakdown">Cost Breakdown</th>
-                    <th data-i18n="thStatus">Status</th>
-                    <th data-i18n="thActions">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="shipments-table-body">
-                  <!-- Injected via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- RIGHT COLUMN: Available Verified Fleet -->
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                <span data-i18n="secFleetTitle">🚛 Verified Transporter Fleet</span>
-              </div>
-            </div>
-            <div id="transporter-fleet-list" style="display: flex; flex-direction: column; gap: 16px;">
-              <!-- Injected via JS -->
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ==================================================== -->
-        <!-- COLD STORAGE BRANCH (PERISHABLE PRODUCE SAFEGUARD) -->
-        <!-- ==================================================== -->
-        <div id="cold-storage-branch-section" class="card" style="border-left: 4px solid var(--cold-cyan); margin-top: 24px;">
-          <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: flex-start;">
-            <div>
-              <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <span data-i18n="secColdBranchTitle">🧊 Cold Storage Branch: Perishable Produce Safeguard</span>
-              </div>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;" data-i18n="secColdBranchSubtitle">
-                Automated Decision Tree: Protect Perishable Produce When No Immediate Buyer Is Available
-              </p>
-            </div>
-            <span id="cs-status-pill" class="badge" style="background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; font-weight: 800;">
-              Simulating Delay Scenario
-            </span>
-          </div>
-
-          <!-- Decision Tree Visual Steps -->
-          <div class="cold-branch-flow">
-            <div class="cs-flow-box">
-              <div class="cs-flow-icon">🌾</div>
-              <strong data-i18n="csStepHarvested">Produce Ready & Harvested</strong>
-              <small>10T Roma Tomatoes</small>
-            </div>
-            <div class="cs-arrow">➔</div>
-            <div class="cs-flow-box alert-border-danger">
-              <div class="cs-flow-icon">❌</div>
-              <strong data-i18n="csStepImmediateBuyer">Immediate Buyer?</strong>
-              <small style="color: var(--status-danger); font-weight: 700;">NO (Mandi Buyer Delayed)</small>
-            </div>
-            <div class="cs-arrow">➔</div>
-            <div class="cs-flow-box alert-border-warning">
-              <div class="cs-flow-icon">🍅</div>
-              <strong data-i18n="csStepPerishableCheck">Perishable Check</strong>
-              <small style="color: #d97706; font-weight: 700;">YES (Max 3-5 days ambient)</small>
-            </div>
-            <div class="cs-arrow">➔</div>
-            <div class="cs-flow-box">
-              <div class="cs-flow-icon">🤖</div>
-              <strong data-i18n="csStepAiEvaluate">AI Recommends Store</strong>
-              <small>Erode Agro Cold Storage (12 km)</small>
-            </div>
-            <div class="cs-arrow">➔</div>
-            <div class="cs-flow-box alert-border-success">
-              <div class="cs-flow-icon">🔒</div>
-              <strong data-i18n="csStepReserve">Reserve Cold Room</strong>
-              <small style="color: #16a34a; font-weight: 700;">Shelf-Life +21 Days</small>
-            </div>
-          </div>
-
-          <!-- Interactive Simulator Panel -->
-          <div style="background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 16px; margin-top: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
-              <div>
-                <strong style="color: var(--primary);" data-i18n="lblSimulateColdPrompt">
-                  Simulate Scenario: 10T Tomatoes Harvested but Mandi Buyer Delayed
-                </strong>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                  AI recommendation: Erode Agro Cold Storage (12 km away · 450T available · ₹15/ton/day).
-                </div>
-              </div>
-              <div id="cs-live-feedback-badge" class="badge badge-warning" style="font-size: 0.82rem;">
-                ⚠️ Unreserved: Risk of Distress Sale
-              </div>
-            </div>
-
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-              <button id="btn-cs-reserve" type="button" class="btn btn-secondary btn-sm" onclick="simulateColdStorageReserve()">
-                <span data-i18n="btnSimulateReserveStorage">🔒 AI Reserve Cold Room Bay (Prevent Distress Sale)</span>
-              </button>
-              <button id="btn-cs-dispatch" type="button" class="btn btn-primary btn-sm" onclick="simulateColdStorageDispatch()" style="display: none;">
-                <span data-i18n="btnSimulateBuyerFound">🤝 Buyer Found ➔ Dispatch from Cold Storage</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- STORAGE DISCOVERY SECTION -->
-        <div class="card" id="storage-discovery-section">
-          <div class="card-header">
-            <div class="card-title">
-              <span data-i18n="secStorageTitle">❄️ Storage & Cold Chain Warehouse Discovery</span>
-            </div>
-            <span class="badge badge-verified" data-i18n="badgeWdra">WDRA & e-NAM Verified</span>
-          </div>
-          <p style="font-size: 0.85rem; margin-bottom: 14px;" data-i18n="storageDesc">
-            Reserve cold rooms and modern scientific warehouses to prevent distress sales and preserve perishable produce quality.
-          </p>
-          <div id="storage-facilities-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
-            <!-- Injected via JS -->
-          </div>
-        </div>
-
-        <!-- QUICK-GIG IDLE DELIVERY PARTNERS (Swiggy / Zomato Downtime Feature) -->
-        <div class="card" id="idle-gigs-section" style="margin-top: 24px; border-left: 4px solid #f97316;">
-          <div class="card-header" style="flex-wrap: wrap; gap: 14px; align-items: flex-start;">
-            <div>
-              <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                <span data-i18n="secIdleGigTitle">⚡ Quick-Gig: Idle Delivery Partners (Swiggy / Zomato / Hyperlocal Fleet)</span>
-              </div>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;" data-i18n="secIdleGigDesc">
-                When delivery drivers have zero food/parcel orders or trucks return empty, they go online here to take immediate farm deliveries at up to 50% discount.
-              </p>
-            </div>
-
-            <!-- Driver / Rider App Status Simulator -->
-            <div style="display: flex; align-items: center; gap: 12px; background: #fff7ed; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid #ffedd5; flex-shrink: 0;">
-              <div>
-                <div style="font-size: 0.72rem; font-weight: 800; color: #c2410c; text-transform: uppercase;" data-i18n="driverModeCardTitle">
-                  🛵 Delivery Partner App: Idle Mode
-                </div>
-                <div id="driver-toggle-status-text" style="font-size: 0.8rem; margin-top: 2px;">
-                  <span style="color:#15803d; font-weight:700;"><span class="pulse-dot"></span> Online (Receiving Farm Micro-Orders)</span>
-                </div>
-              </div>
-              <button id="btn-driver-toggle" class="btn btn-outline btn-sm" onclick="toggleDriverOnlineStatus()" style="font-size: 0.78rem; padding: 5px 12px;">
-                Go Offline
-              </button>
-            </div>
-          </div>
-
-          <!-- Dynamic List of Idle Partners -->
-          <div id="idle-partners-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px;">
-            <!-- Injected via renderIdlePartners() in logistics.js -->
-          </div>
-        </div>
-
-      </div>
-    </main>
-
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 1: PICKUP REQUEST & BOOKING WIZARD -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-create-pickup">
-    <div class="modal-box modal-box-lg">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="modalPickupTitle">📦 Create Produce Pickup Request</h3>
-        <button class="modal-close" onclick="closeModal('modal-create-pickup')">&times;</button>
-      </div>
-      <form id="form-create-pickup">
-        <div class="modal-body">
-          
-          <!-- 1-Click Auto-Fill Demo Presets (User-Friendly feature) -->
-          <div style="background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
-            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;" data-i18n="demoPresetsLabel">
-              ⚡ 1-Click Auto-Fill Demo Scenarios:
-            </div>
-            <div class="preset-chips-wrapper" style="margin-bottom: 0;">
-              <button type="button" class="preset-chip" onclick="autoFillPickupPreset('tomato')">
-                <span data-i18n="presetTomato">🍅 10T Tomatoes (Cold Chain)</span>
-              </button>
-              <button type="button" class="preset-chip" onclick="autoFillPickupPreset('onion')">
-                <span data-i18n="presetOnion">🧅 12T Onions (FPO Pooled)</span>
-              </button>
-              <button type="button" class="preset-chip" onclick="autoFillPickupPreset('paddy')">
-                <span data-i18n="presetPaddy">🌾 15T Paddy (Bulk Grain)</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblCrop">Crop / Commodity</label>
-              <select id="req-crop" class="form-select" required>
-                <option value="" disabled selected data-i18n="selectCropDefault">Select Crop...</option>
-                <option value="Tomatoes" data-i18n="cropTomato">Tomatoes (Perishable)</option>
-                <option value="Onions" data-i18n="cropOnion">Onions (Semi-Perishable)</option>
-                <option value="Paddy / Rice" data-i18n="cropPaddy">Paddy / Rice (Grains)</option>
-                <option value="Wheat" data-i18n="cropWheat">Wheat (Grains)</option>
-                <option value="Dairy / Milk" data-i18n="cropDairy">Dairy / Milk (Cold Chain)</option>
-                <option value="Banana / Mango" data-i18n="cropBanana">Banana / Mango (Fragile)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblVariety">Variety / Quality Spec</label>
-              <input type="text" id="req-variety" class="form-control" placeholder="e.g. Roma Hybrid / Grade A" required />
-            </div>
-          </div>
-
-          <!-- Dynamic FAO Recommendation Box -->
-          <div id="crop-recommendation-box" class="alert-box alert-warning" style="display: none;"></div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblQuantity">Quantity (Tonnes)</label>
-              <input type="number" id="req-quantity" class="form-control" min="0.5" max="30" step="0.5" value="10" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblPackaging">Packaging Units (Bags / Crates)</label>
-              <input type="text" id="req-crates" class="form-control" placeholder="e.g. 400 Plastic Crates" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblPickupLoc">Farmgate / Collection Pickup</label>
-              <input type="text" id="req-pickup-loc" class="form-control" value="Village Collection Center, Erode" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblDeliveryLoc">Destination (Warehouse / Mandi / Processor)</label>
-              <input type="text" id="req-delivery-loc" class="form-control" value="Processor Warehouse, Coimbatore" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblDistance">Trip Distance (Est. km)</label>
-              <input type="number" id="req-distance" class="form-control" value="85" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblPickupWindow">Pickup Window (Date & Time)</label>
-              <input type="text" id="req-datetime" class="form-control" value="14 Sep, 06:00 AM - 08:00 AM" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblVehicleConfig">Required Vehicle Configuration</label>
-              <select id="req-vehicle-type" class="form-select">
-                <option value="ventilated" data-i18n="optVentilated">Ventilated Truck (Recommended for Veg/Fruit)</option>
-                <option value="reefer" data-i18n="optReefer">Refrigerated Reefer (2°C - 8°C Cold Chain)</option>
-                <option value="heavy" data-i18n="optHeavy">Covered Heavy Truck (Grains & Bulk)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="lblContact">Contact Person Phone</label>
-              <input type="text" id="req-contact" class="form-control" value="+91 98421 00123" required />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
-              <input type="checkbox" id="req-loading-help" checked />
-              <span data-i18n="lblLoadingHelp">Include Loading & Unloading Assistance at Gate</span>
-            </label>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" data-i18n="lblInstructions">Handling Instructions & Temperature Limit</label>
-            <input type="text" id="req-notes" class="form-control" value="Rigid plastic crates, avoid direct rain/sun, max 3-tier stacking" />
-          </div>
-
-          <!-- Fare Estimation Breakdown Preview -->
-          <div class="card" style="background: var(--bg-subtle); margin-top: 12px;">
-            <div style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;" data-i18n="titleFormulaFare">
-              Formula Fare Estimation
-            </div>
-            <div id="fare-estimation-preview">
-              <!-- Dynamically computed -->
-            </div>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="closeModal('modal-create-pickup')" data-i18n="btnCancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" data-i18n="btnConfirmBook">Confirm & Book Transporter</button>
-        </div>
-      </form>
     </div>
-  </div>
+  </main>
 
-  <!-- ==================================================== -->
-  <!-- MODAL 2: LIVE TRACKING & MILESTONES -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-live-tracking">
-    <div class="modal-box modal-box-lg">
-      <div class="modal-header">
-        <h3 class="modal-title" id="track-modal-title" data-i18n="modalTrackTitle">Live Tracking</h3>
-        <button class="modal-close" onclick="closeModal('modal-live-tracking')">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <div>
-            <h4 id="track-crop-title" style="font-size: 1.15rem; color: var(--primary);" data-i18n="lblProduceDetails">Produce Details</h4>
-            <div id="track-route-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Route</div>
-          </div>
-          <div style="text-align: right;">
-            <span id="track-current-status" class="badge badge-transit" style="font-size: 0.85rem;">In Transit</span>
-            <div id="track-eta-display" style="font-size: 0.78rem; font-weight: 700; color: var(--transport-blue); margin-top: 4px;">ETA: Calculating...</div>
-          </div>
-        </div>
+  <footer>
+    AgriNex Logistics System · Dedicated Modules for Farmer, Buyer, Transporter, and Admin.
+  </footer>
 
-        <!-- Real Interactive Google Maps / Swiggy-Style Live GPS Map View -->
-        <div class="real-map-wrapper">
-          <!-- Floating Live Telemetry HUD Bar (Swiggy Style) -->
-          <div class="map-telemetry-overlay">
-            <div class="telemetry-chip">
-              <span class="telemetry-icon">⚡</span>
-              <div>
-                <div class="telemetry-sub" data-i18n="lblLiveSpeed">Live Speed</div>
-                <div class="telemetry-val" id="track-live-speed">38 km/h</div>
-              </div>
-            </div>
-            <div class="telemetry-chip">
-              <span class="telemetry-icon">📍</span>
-              <div>
-                <div class="telemetry-sub" data-i18n="lblRemainingDist">Remaining Distance</div>
-                <div class="telemetry-val" id="track-live-dist">18.4 km</div>
-              </div>
-            </div>
-            <div class="telemetry-chip">
-              <span class="telemetry-icon">⏱️</span>
-              <div>
-                <div class="telemetry-sub" data-i18n="lblGigEta">Arrival ETA</div>
-                <div class="telemetry-val" id="track-live-eta">28 mins</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Floating Map Control Buttons (Swiggy / Uber Style) -->
-          <div class="map-floating-controls">
-            <button type="button" class="btn-map-control" onclick="recenterLiveMap()" title="Center on Vehicle">
-              <span data-i18n="btnRecenterVehicle">🎯 Recenter Vehicle</span>
-            </button>
-            <button type="button" class="btn-map-control" onclick="fitFullRouteBounds()" title="Fit Entire Route">
-              <span data-i18n="btnFitRoute">🗺️ Fit Full Route</span>
-            </button>
-          </div>
-
-          <!-- Interactive Leaflet Map Container -->
-          <div id="live-map-canvas" class="swiggy-map-view"></div>
-        </div>
-
-        <!-- 7-Stage Milestone Stepper -->
-        <div class="timeline" id="tracking-stepper">
-          <!-- Dynamically filled -->
-        </div>
-
-        <!-- Driver & Vehicle Verified Specs -->
-        <div class="card" style="margin-top: 16px;">
-          <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 10px;" data-i18n="lblVerifiedTelemetry">Verified Crew & Vehicle Telemetry</div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.85rem;">
-            <div>
-              <span class="spec-label" data-i18n="lblAssignedDriver">Assigned Driver</span>
-              <div id="track-driver-name" style="font-weight: 700;">-</div>
-              <a id="track-driver-phone" href="#" style="color: var(--transport-blue); font-weight: 700; font-size: 0.82rem;" data-i18n="lblCallDriver">📞 Call Driver</a>
-            </div>
-            <div>
-              <span class="spec-label" data-i18n="lblVehicleRegPlate">Vehicle Reg #</span>
-              <div id="track-vehicle-reg" class="vehicle-reg-plate">-</div>
-            </div>
-            <div>
-              <span class="spec-label" data-i18n="lblBodyType">Body Type</span>
-              <div id="track-vehicle-type" style="font-weight: 600;">-</div>
-            </div>
-            <div>
-              <span class="spec-label" data-i18n="lblSensorTelemetry">Sensor Telemetry</span>
-              <div style="font-weight: 700; color: #16a34a;" data-i18n="valTempNormal">Temp: 13.8°C (Normal)</div>
-              <small style="color: var(--text-muted);" data-i18n="valSealOk">Seal # AGX-9014-OK</small>
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer" style="justify-content: space-between;">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="advanceActiveTripSimulation()">
-          <span data-i18n="btnAdvanceDemo">⚡ Advance Milestone (Demo)</span>
-        </button>
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-live-tracking')" data-i18n="btnClose">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 3: DIGITAL PROOF OF DELIVERY (POD) WITH REAL SIGNATURE PAD -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-pod-verification">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="modalPodTitle">✍️ Digital Proof of Delivery (POD)</h3>
-        <button class="modal-close" onclick="closeModal('modal-pod-verification')">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <p style="font-size: 0.85rem; margin-bottom: 16px;" data-i18n="podInstruction">
-          Confirming delivery for shipment. Receiver must verify OTP or scan QR to unlock escrow settlement.
-        </p>
-
-        <div class="alert-box alert-warning">
-          <div>
-            <strong data-i18n="lblReceiverOtp">Receiver Verification OTP:</strong>
-            <span id="pod-modal-otp-display" style="font-family: monospace; font-size: 1.25rem; font-weight: 800; letter-spacing: 2px; margin-left: 8px;"></span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblEnterOtp">Enter 4-Digit Receiver Confirmation OTP</label>
-          <input type="text" id="pod-otp-input" class="form-control" placeholder="e.g. 5829" maxlength="4" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblReceiverName">Authorized Receiver Name / Warehouse Officer</label>
-          <input type="text" id="pod-receiver-name" class="form-control" placeholder="e.g. Anand R. (Inward Manager)" />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" data-i18n="lblDeliveredQty">Delivered Quantity (Tonnes)</label>
-            <input type="number" id="pod-delivered-qty" class="form-control" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" data-i18n="lblArrivalCondition">Condition at Arrival</label>
-            <select id="pod-condition" class="form-select">
-              <option value="Good (Inspected)" data-i18n="optCondGood">Good - Zero Damage / Fresh</option>
-              <option value="Minor Crushing" data-i18n="optCondMinor">Minor Crushing (< 2%)</option>
-              <option value="Severe Damage" data-i18n="optCondSevere">Severe Damage / Rejected</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Interactive HTML5 Canvas Signature Pad -->
-        <div class="form-group">
-          <label class="form-label" style="display: flex; justify-content: space-between;">
-            <span data-i18n="lblDigitalSignOff">Digital Sign-off (Sign with Mouse / Finger)</span>
-            <span style="font-weight: normal; color: var(--text-muted); font-size: 0.75rem;" data-i18n="hintDrawSignature">Draw signature inside box</span>
-          </label>
-          <div class="signature-box-wrapper">
-            <canvas id="pod-signature-canvas" class="signature-canvas"></canvas>
-            <button type="button" class="signature-clear-btn" onclick="clearSignature()" data-i18n="btnClearSignature">Clear Signature</button>
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-pod-verification')" data-i18n="btnCancel">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="submitPODVerification()" data-i18n="btnPod">Confirm POD & Release Escrow</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 4: INVOICE & FARE BREAKDOWN SLIP -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-invoice-detail">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="modalInvoiceTitle">🧾 Freight Invoice & Breakdown</h3>
-        <button class="modal-close" onclick="closeModal('modal-invoice-detail')">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <div class="invoice-slip">
-          <div class="invoice-header">
-            <div>
-              <h2 style="font-size: 1.1rem; color: var(--primary);" data-i18n="invHeaderTitle">AgriNex Logistics Invoice</h2>
-              <div style="font-size: 0.75rem; color: var(--text-muted);"><span data-i18n="invTripId">Trip ID:</span> <span id="inv-tracking-id" style="font-family: monospace; font-weight: 700;"></span></div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);"><span data-i18n="invLotRef">Lot Reference:</span> <span id="inv-lot-id"></span></div>
-            </div>
-            <div style="text-align: right;">
-              <div id="inv-settlement-status"></div>
-              <div id="inv-date" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;"></div>
-            </div>
-          </div>
-
-          <div style="font-size: 0.8rem; margin-bottom: 12px;">
-            <div><strong data-i18n="invTransporter">Transporter:</strong> <span id="inv-transporter"></span></div>
-            <div><strong data-i18n="invVehicle">Vehicle:</strong> <span id="inv-vehicle"></span></div>
-            <div><strong data-i18n="invDistWeight">Distance & Weight:</strong> <span id="inv-distance"></span> · <span id="inv-quantity"></span></div>
-          </div>
-
-          <!-- Formula Breakdown -->
-          <div class="invoice-item-row">
-            <span data-i18n="invBaseFare">Base Fare</span>
-            <strong id="inv-base-fare">₹0</strong>
-          </div>
-          <div class="invoice-item-row">
-            <span data-i18n="invDistCharge">Distance Charge</span>
-            <strong id="inv-distance-charge">₹0</strong>
-          </div>
-          <div class="invoice-item-row">
-            <span data-i18n="invLoadingCharge">Loading Charge</span>
-            <strong id="inv-loading-charge">₹0</strong>
-          </div>
-          <div class="invoice-item-row">
-            <span data-i18n="invUnloadingCharge">Unloading Charge</span>
-            <strong id="inv-unloading-charge">₹0</strong>
-          </div>
-          <div class="invoice-item-row">
-            <span data-i18n="invTollCharge">Toll & Highway Charges</span>
-            <strong id="inv-toll-charge">₹0</strong>
-          </div>
-          <div class="invoice-item-row">
-            <span data-i18n="invWaitingCharge">Waiting Charge</span>
-            <strong id="inv-waiting-charge">₹0</strong>
-          </div>
-
-          <div class="invoice-item-total">
-            <span data-i18n="invTotalFare">Total Logistics Fare</span>
-            <span id="inv-total-fare">₹0</span>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem; background: var(--bg-subtle); padding: 8px 12px; border-radius: var(--radius-xs);">
-            <span><span data-i18n="invCostPerKg">Cost per kg:</span> <strong id="inv-per-kg">₹0/kg</strong></span>
-            <span><span data-i18n="invCostPerQtl">Cost per quintal:</span> <strong id="inv-per-qtl">₹0/qtl</strong></span>
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="window.print()" data-i18n="btnPrintInvoice">🖨️ Print Invoice</button>
-        <button type="button" class="btn btn-primary" onclick="closeModal('modal-invoice-detail')" data-i18n="btnDone">Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 5: EXCEPTION / DELAY / BREAKDOWN REPORT -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-exception-report">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" style="color: var(--status-danger);" data-i18n="modalExceptionTitle">⚠️ Report Trip Exception</h3>
-        <button class="modal-close" onclick="closeModal('modal-exception-report')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size: 0.85rem; margin-bottom: 12px;">
-          Log an emergency exception for trip <strong id="exc-tracking-id"></strong>. Driver: <span id="exc-driver-info"></span>.
-        </p>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblExceptionCategory">Exception Category</label>
-          <select id="exc-reason" class="form-select">
-            <option value="Vehicle Breakdown / Mechanical Failure" data-i18n="optBreakdown">Vehicle Breakdown / Mechanical Failure</option>
-            <option value="Extreme Weather / Heavy Rain" data-i18n="optWeather">Extreme Weather / Heavy Rain</option>
-            <option value="Driver Unreachable / Delayed Arrival" data-i18n="optDriverDelay">Driver Unreachable / Delayed Arrival</option>
-            <option value="Quantity / Weight Mismatch at Loading" data-i18n="optMismatch">Quantity / Weight Mismatch at Loading</option>
-            <option value="Buyer Warehouse Closed / Intake Delayed" data-i18n="optWarehouseClosed">Buyer Warehouse Closed / Intake Delayed</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblIssueDetails">Issue Details & Situation</label>
-          <textarea id="exc-details" class="form-textarea" rows="3" placeholder="Describe the delay, location, and produce risk..." data-i18n-placeholder="placeholderDetails"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; color: var(--primary);">
-            <input type="checkbox" id="exc-req-replacement" checked />
-            <span data-i18n="lblReqReplacement">Request Immediate Replacement Transporter</span>
-          </label>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-exception-report')" data-i18n="btnCancel">Cancel</button>
-        <button type="button" class="btn btn-danger" onclick="submitExceptionReport()" data-i18n="btnSubmitReport">Submit Incident Report</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 6: RATINGS & REVIEW -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-trip-rating">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="modalRatingTitle">⭐ Rate Transporter & Trip</h3>
-        <button class="modal-close" onclick="closeModal('modal-trip-rating')">&times;</button>
-      </div>
-      <div class="modal-body" style="text-align: center;">
-        <h4 id="rating-driver-name" style="font-size: 1.1rem; margin-bottom: 2px;">Driver Name</h4>
-        <div id="rating-vehicle" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">Vehicle</div>
-
-        <div id="star-container" class="star-rating" style="margin-bottom: 20px;">
-          <span class="star filled" onclick="setStars(1)">★</span>
-          <span class="star filled" onclick="setStars(2)">★</span>
-          <span class="star filled" onclick="setStars(3)">★</span>
-          <span class="star filled" onclick="setStars(4)">★</span>
-          <span class="star filled" onclick="setStars(5)">★</span>
-        </div>
-
-        <div class="form-group" style="text-align: left;">
-          <label class="form-label" data-i18n="lblDriverFeedback">Driver Conduct & Cargo Care Feedback</label>
-          <textarea id="rating-feedback" class="form-textarea" rows="3" placeholder="How was punctuality, packaging handling, and communication?" data-i18n-placeholder="placeholderRating"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-trip-rating')" data-i18n="btnSkip">Skip</button>
-        <button type="button" class="btn btn-primary" onclick="submitTripRating()" data-i18n="btnSubmitRating">Submit Rating</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 7: RURAL HELPLINE & IVR ASSISTANT (LOW CONNECTIVITY) -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-rural-helpline">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" data-i18n="modalHelplineTitle">📞 Rural Helpline & IVR Voice Desk</h3>
-        <button class="modal-close" onclick="closeModal('modal-rural-helpline')">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p style="font-size: 0.85rem; margin-bottom: 16px;" data-i18n="helplineDesc">
-          For weak internet connections or quick voice booking, farmers and FPOs can use our automated IVR or WhatsApp helpline.
-        </p>
-
-        <div class="alert-box alert-success">
-          <div>
-            <strong data-i18n="lblTollFree">Toll-Free Helpline:</strong>
-            <div style="font-size: 1.25rem; font-weight: 800; margin-top: 4px; font-family: monospace;">1800-AGRI-LOG (1800-2474-564)</div>
-            <small data-i18n="helplineAvail">Available 24x7 in Hindi, Tamil, Telugu, and English</small>
-          </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px; font-size: 0.85rem;">
-          <div style="padding: 10px; border-radius: 8px; background: #f8fafc; border: 1px solid var(--border-default);" data-i18n="ivrOpt1">
-            Option 1: Book farmgate pickup via voice ("Book 5T maize for tomorrow")
-          </div>
-          <div style="padding: 10px; border-radius: 8px; background: #f8fafc; border: 1px solid var(--border-default);" data-i18n="ivrOpt2">
-            Option 2: Check active shipment location by entering 4-digit trip ID
-          </div>
-          <div style="padding: 10px; border-radius: 8px; background: #f8fafc; border: 1px solid var(--border-default);" data-i18n="ivrOpt3">
-            Option 3: Emergency breakdown or vehicle replacement request
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-rural-helpline')" data-i18n="btnClose">Close</button>
-        <a href="tel:18002474564" class="btn btn-primary" data-i18n="btnCallHelpline">Call Helpline Now</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- MODAL 8: INSTANT GIG BOOKING (SWIGGY/ZOMATO IDLE FLEET) -->
-  <!-- ==================================================== -->
-  <div class="modal-overlay" id="modal-instant-gig">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title" style="color: #c2410c;" data-i18n="modalGigTitle">⚡ Book Instant Gig Partner (Zero Food-Order Fleet)</h3>
-        <button class="modal-close" onclick="closeModal('modal-instant-gig')">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <!-- Partner Summary Card -->
-        <div style="background: #fff7ed; border: 1px solid #ffedd5; border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-              <span class="spec-label" data-i18n="lblGigPartner">Assigned Delivery Partner</span>
-              <div id="gig-modal-partner-name" style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">-</div>
-            </div>
-            <span id="gig-modal-discount" class="badge" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 800;">-</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.82rem; margin-top: 6px;">
-            <div>
-              <span class="spec-label" data-i18n="lblGigRateEst">Discounted Rate</span>
-              <div id="gig-modal-fare" style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">-</div>
-            </div>
-            <div>
-              <span class="spec-label" data-i18n="lblGigEta">Arrival ETA</span>
-              <div id="gig-modal-eta" style="font-weight: 800; color: var(--transport-blue); font-size: 0.95rem;">-</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblGigSelectCrop">Produce / Commodity</label>
-          <select id="gig-req-crop" class="form-select">
-            <option value="Tomatoes (Fresh Crates)" selected data-i18n="cropTomato">Tomatoes</option>
-            <option value="Onions (Small Bags)" data-i18n="cropOnion">Onions</option>
-            <option value="Dairy / Fresh Milk Cans" data-i18n="cropDairy">Dairy / Milk</option>
-            <option value="Banana / Fruit Boxes" data-i18n="cropBanana">Banana / Mango</option>
-            <option value="Assorted Vegetables">Assorted Greens & Veggies</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblGigQuantityKg">Weight / Packaging (e.g. 50 kg / 2 Crates)</label>
-          <input type="text" id="gig-req-qty" class="form-control" value="80 kg (4 Crates)" placeholder="e.g. 100 kg / 3 Crates" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="lblGigDropLoc">Destination (Local Mandi / Customer / Warehouse)</label>
-          <input type="text" id="gig-req-drop" class="form-control" value="Town Vegetable Mandi, Shop #14" placeholder="e.g. Nearby Mandi Yard or Buyer Outlet" />
-        </div>
-
-        <div class="alert-box alert-success" style="font-size: 0.8rem; margin-top: 10px;">
-          ⚡ <strong>Direct Farmgate Micro-Run:</strong> The delivery partner will arrive directly at your farm collection point within minutes, load the crates, and rush them to the local buyer or mandi!
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="closeModal('modal-instant-gig')" data-i18n="btnCancel">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="confirmInstantGigBooking()" data-i18n="btnConfirmGigBook">⚡ Dispatch Gig Rider Now</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- SCRIPTS -->
-  <script src="js/i18n.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/calculator.js"></script>
-  <!-- Leaflet Map Library (for real Swiggy/Google Maps interactive routing) -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="js/tracking.js"></script>
-  <script src="js/logistics.js"></script>
 </body>
 </html>

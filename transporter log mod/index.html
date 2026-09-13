@@ -1,0 +1,421 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriNex - Transporter & Driver Logistics Console</title>
+  
+  <!-- Design System & Components CSS -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/logistics.css" />
+  <link rel="stylesheet" href="css/driver-console.css" />
+
+  <!-- Leaflet CSS for Google Maps / Swiggy-Style Real GPS Tracking -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+
+  <div class="app-layout">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-area">
+          <div class="logo-symbol" style="background: linear-gradient(135deg, #d97706, #f59e0b);">🚚</div>
+          <div>
+            <div class="logo-text">AgriNex <span style="font-size: 0.75rem; color: #fde68a;">Driver</span></div>
+            <div class="logo-sub">Fleet & Dispatch Console</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="sidebar-label">DRIVER CONTROLS</div>
+        <ul class="sidebar-nav">
+          <li class="sidebar-item active" onclick="document.getElementById('active-navigator-section').scrollIntoView({behavior:'smooth'})">
+            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            <span>Active Navigation</span>
+          </li>
+          <li class="sidebar-item" onclick="document.getElementById('trip-offers-section').scrollIntoView({behavior:'smooth'})">
+            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Available Trips</span>
+          </li>
+          <li class="sidebar-item" onclick="openPODModal('CLUSTER-AGX-801')">
+            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>POD Handover</span>
+          </li>
+          <li class="sidebar-item" onclick="document.getElementById('driver-wallet-section').scrollIntoView({behavior:'smooth'})">
+            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <span>Earnings & Wallet</span>
+          </li>
+          <li class="sidebar-item" onclick="openDriverSOSModal()">
+            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>Emergency SOS</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-badge-mini">
+          <div class="user-avatar-mini" style="background: #d97706;">KR</div>
+          <div>
+            <div style="color: #fff; font-weight: 700;">Karthik Raja</div>
+            <div style="color: #94a3b8; font-size: 0.72rem;">Commercial Fleet Partner</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <main class="main-wrapper">
+      
+      <!-- TOP NAVBAR -->
+      <header class="top-navbar">
+        <div class="nav-left">
+          <h1 class="page-title">🚚 AgriNex Driver Navigation Console</h1>
+          <span class="badge" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-weight: 800; font-size: 0.85rem;">
+            Tata Ace EV · TN-33-AX-8910
+          </span>
+        </div>
+
+        <div class="nav-right">
+          <!-- Quick Gig Online / Offline Mode Toggle -->
+          <button id="btn-driver-toggle" class="btn btn-outline btn-sm" onclick="toggleDriverOnlineStatus()" style="font-weight: 700; border-color: #10b981; color: #10b981;">
+            🟢 Online (Farm Trips Active)
+          </button>
+
+          <!-- Multilingual Language Switcher (EN, HI, TA) -->
+          <div class="lang-switcher-pill" title="Switch Language">
+            <span style="font-size: 0.85rem; margin-left: 4px;">🌐</span>
+            <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हिन्दी</button>
+            <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">தமிழ்</button>
+          </div>
+
+          <button class="btn btn-danger btn-sm" onclick="openDriverSOSModal()" style="background: #dc2626; border-color: #dc2626; font-weight: 800;">
+            🚨 SOS
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <div class="content-body">
+        
+        <!-- DRIVER HERO BAR -->
+        <div class="driver-banner-hero">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="font-size: 0.8rem; text-transform: uppercase; color: #fbbf24; font-weight: 800;">CURRENT DISPATCHED MISSION</div>
+              <div style="font-weight: 800; font-size: 1.3rem; margin-top: 4px;">
+                CLUSTER-AGX-801 · 3-Village Farmer Pool (1.2 Tonnes)
+              </div>
+              <div style="font-size: 0.85rem; color: #cbd5e1; margin-top: 2px;">
+                Route: Thindal ➔ Villarasampatti ➔ Perundurai ➔ Coimbatore APMC Mandi
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <div class="driver-stat-pill">
+                <span style="font-size: 1.3rem;">🔋</span>
+                <div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 700;">BATTERY</div>
+                  <strong style="color: #34d399;">84% (110 km)</strong>
+                </div>
+              </div>
+
+              <div class="driver-stat-pill">
+                <span style="font-size: 1.3rem;">⚖️</span>
+                <div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 700;">PAYLOAD</div>
+                  <strong style="color: #60a5fa;">1.2 / 1.5 T</strong>
+                </div>
+              </div>
+
+              <div class="driver-stat-pill">
+                <span style="font-size: 1.3rem;">💵</span>
+                <div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 700;">TRIP FARE</div>
+                  <strong style="color: #fbbf24;">₹1,650</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVE NAVIGATOR & MAP -->
+        <div class="card" id="active-navigator-section">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🗺️ Live GPS Navigation & Turn Telematics</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">
+                Follow the 3-stop farmgate collection corridor to Mandi. Real-time road route with Swiggy-style radar pulse.
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="advanceActiveTripSimulation()">
+                ⚡ Advance Milestone
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="openPODModal('CLUSTER-AGX-801')">
+                ✍️ Delivery POD
+              </button>
+            </div>
+          </div>
+
+          <!-- Embedded Real Leaflet Map -->
+          <div class="map-container-box" style="margin-top: 10px;">
+            <div id="live-map-canvas" style="width: 100%; height: 380px; border-radius: var(--radius-sm); z-index: 1;"></div>
+            
+            <div class="map-hud-bar">
+              <div class="hud-chip">
+                <span class="hud-label">TRUCK SPEED</span>
+                <span class="hud-value" id="track-live-speed">54 km/h</span>
+              </div>
+              <div class="hud-chip">
+                <span class="hud-label">DISTANCE TO MANDI</span>
+                <span class="hud-value" id="track-live-dist">18.4 km</span>
+              </div>
+              <div class="hud-chip">
+                <span class="hud-label">DELIVERY ETA</span>
+                <span class="hud-value" id="track-live-eta">ETA 28m</span>
+              </div>
+            </div>
+
+            <div class="map-control-overlay">
+              <button type="button" class="btn btn-sm btn-outline" style="background:#fff; font-size:0.75rem;" onclick="if(typeof LogisticsTracking!=='undefined'&&LogisticsTracking.recenterVehicle) LogisticsTracking.recenterVehicle()">🎯 Recenter</button>
+              <button type="button" class="btn btn-sm btn-outline" style="background:#fff; font-size:0.75rem;" onclick="if(typeof LogisticsTracking!=='undefined'&&LogisticsTracking.fitFullRoute) LogisticsTracking.fitFullRoute()">🗺️ Full Route</button>
+            </div>
+          </div>
+
+          <!-- Turn-by-Turn Waypoint Cards -->
+          <div style="margin-top: 18px;">
+            <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 12px; color: var(--text-main);">
+              MULTI-STOP COLLECTION TIMELINE (1.2 TONNES POOLED):
+            </div>
+
+            <!-- Stop 1 -->
+            <div class="waypoint-node-item">
+              <div class="waypoint-badge-num completed">✓</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong>Stop 1: Farmer A · Ravi Kumar (Thindal)</strong>
+                  <span class="badge badge-delivered">Collected · 08:00 AM</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                  Loaded: 350 kg Fresh Tomatoes (14 Crates) · Share: ₹481 · OTP Verified
+                </div>
+              </div>
+            </div>
+
+            <!-- Stop 2 -->
+            <div class="waypoint-node-item">
+              <div class="waypoint-badge-num completed">✓</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong>Stop 2: Farmer B · Selvam P. (Villarasampatti)</strong>
+                  <span class="badge badge-delivered">Collected · 08:20 AM</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                  Loaded: 450 kg Fresh Tomatoes (18 Crates) · Share: ₹618 · OTP Verified
+                </div>
+              </div>
+            </div>
+
+            <!-- Stop 3 -->
+            <div class="waypoint-node-item">
+              <div class="waypoint-badge-num completed">✓</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong>Stop 3: Farmer C · Murugan S. (Perundurai)</strong>
+                  <span class="badge badge-delivered">Collected · 08:45 AM</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                  Loaded: 400 kg Fresh Tomatoes (16 Crates) · Share: ₹551 · OTP Verified
+                </div>
+              </div>
+            </div>
+
+            <!-- Final Drop -->
+            <div class="waypoint-node-item" style="border-left: 4px solid var(--driver-amber); background: #fffbeb;">
+              <div class="waypoint-badge-num" style="background: #b45309;">🏁</div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between;">
+                  <strong style="color: #b45309;">Final Destination: Coimbatore APMC Mandi Yard</strong>
+                  <span class="badge badge-transit">Approaching · ETA 28m</span>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+                  Consolidated Unloading: 1.2 Tonnes (48 Crates) · Unloading Dock Gate #2
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DISPATCH BOARD: AVAILABLE TRIPS -->
+        <div class="card" id="trip-offers-section" style="margin-top: 24px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📡 Trip Dispatch Board (Nearby Load Broadcasts)</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">
+                Live trip offers broadcasted by farmers and FPOs in your 15 km perimeter.
+              </p>
+            </div>
+            <span class="badge badge-verified">2 New Requests</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 14px;">
+            <!-- Trip Offer 1 -->
+            <div class="trip-offer-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <span class="badge" style="background: #fff7ed; color: #c2410c; font-weight: 800;">⚡ Quick-Gig Micro Run</span>
+                  <div style="font-weight: 800; font-size: 1.1rem; margin-top: 6px;">Daily Fresh Milk & Greens</div>
+                  <div style="font-size: 0.82rem; color: var(--text-muted);">Farmgate Point ➔ Town Market (8 km)</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">₹129</div>
+                  <small style="color: var(--text-muted);">Payout</small>
+                </div>
+              </div>
+              <div style="margin: 12px 0; font-size: 0.82rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                Weight: <strong>120 kg (4 Crates)</strong> · Pickup: Immediate · Driver Downtime Run
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-sm" style="flex-grow: 1;" onclick="showToast('success', 'Trip Accepted!', 'Navigating to Farmgate collection point.')">
+                  ⚡ Accept Gig
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="this.parentElement.parentElement.remove()">Decline</button>
+              </div>
+            </div>
+
+            <!-- Trip Offer 2 -->
+            <div class="trip-offer-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <span class="badge" style="background: #f0fdf4; color: #15803d; font-weight: 800;">🌾 FPO Consolidated Lot</span>
+                  <div style="font-weight: 800; font-size: 1.1rem; margin-top: 6px;">Nashik Red Onions (240 Bags)</div>
+                  <div style="font-size: 0.82rem; color: var(--text-muted);">Bhavani FPO ➔ Tiruppur APMC (60 km)</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary);">₹9,020</div>
+                  <small style="color: var(--text-muted);">FTL Freight</small>
+                </div>
+              </div>
+              <div style="margin: 12px 0; font-size: 0.82rem; background: #f8fafc; padding: 8px 10px; border-radius: 4px;">
+                Weight: <strong>12.0 Tonnes (FTL)</strong> · Requires Heavy 10-Wheeler
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-sm" style="flex-grow: 1;" onclick="showToast('info', 'Assigned to Fleet', 'Trip logged for heavy fleet partner.')">
+                  Accept for Fleet
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="this.parentElement.parentElement.remove()">Decline</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRIVER EARNINGS & WALLET -->
+        <div class="card" id="driver-wallet-section" style="margin-top: 24px;">
+          <div class="card-header">
+            <div class="card-title">💰 Driver Wallet & Instant Earnings</div>
+            <span class="badge badge-delivered">UPI Auto-Settlement Active</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 10px; background: #f8fafc; padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-default);">
+            <div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">TODAY'S TOTAL SETTLED EARNINGS</div>
+              <div class="wallet-badge" style="margin-top: 6px; display: inline-block;">₹3,840</div>
+              <div style="font-size: 0.78rem; color: #15803d; margin-top: 4px; font-weight: 600;">
+                ✓ 3 Completed Deliveries · Escrow released automatically upon OTP verification
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-primary" onclick="showToast('success', 'UPI Payout Triggered!', '₹3,840 transferred to Karthik Raja (UPI: 9842199812@okhdfcbank).')" style="font-weight: 800;">
+                ⚡ Request Instant Bank Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- SOS MODAL -->
+  <div class="modal-backdrop" id="modal-driver-sos">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title" style="color: #dc2626;">🚨 Emergency Roadside Assistance</div>
+        <button class="modal-close" onclick="closeModal('modal-driver-sos')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Immediate 24/7 breakdown helpline for commercial agricultural transporters:
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+          <a href="tel:18004251234" class="btn btn-danger action-btn-large">
+            📞 Call Highway Towing & Mechanic (1800 425 1234)
+          </a>
+          <button class="btn btn-outline" onclick="showToast('warning', 'Backup Dispatched', 'Nearby backup Tata Ace notified to assist load transfer.'); closeModal('modal-driver-sos');">
+            🔄 Request Backup Vehicle for Perishable Load
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-driver-sos')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POD MODAL -->
+  <div class="modal-backdrop" id="modal-pod-verification">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">✍️ Proof of Delivery (POD) Handover</div>
+        <button class="modal-close" onclick="closeModal('modal-pod-verification')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Ask Buyer for Receiver OTP *</label>
+          <input type="text" class="form-control" id="pod-otp-input" placeholder="e.g. 4912" style="font-size: 1.3rem; font-weight: 800; text-align: center; letter-spacing: 4px;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Buyer Touchscreen Signature Pad</label>
+          <canvas id="pod-signature-canvas" style="background:#fff; border:1px solid #cbd5e1; border-radius:4px; width:100%; height:120px; touch-action:none;"></canvas>
+          <button type="button" class="btn btn-outline btn-sm clear-sig-btn" onclick="clearSignature()">Clear</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-pod-verification')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitPODVerification()">✅ Submit & Release Payout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION SCRIPTS -->
+  <script src="js/data.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/logistics.js"></script>
+
+  <script>
+    function openDriverSOSModal() {
+      openModal('modal-driver-sos');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auto-render live map for active cluster trip
+      setTimeout(() => {
+        const cluster = LOGISTICS_DATA.bookings.find(b => b.trackingId === 'CLUSTER-AGX-801') || LOGISTICS_DATA.bookings[0];
+        if (typeof LogisticsTracking !== 'undefined' && typeof LogisticsTracking.renderLiveMap === 'function') {
+          LogisticsTracking.renderLiveMap(cluster);
+        }
+      }, 300);
+    });
+  </script>
+
+</body>
+</html>
