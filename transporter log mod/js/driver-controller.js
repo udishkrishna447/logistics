@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AgriNex Driver & Transporter Console Controller
  * Implements the exact, logical operational lifecycle for truckers and gig drivers:
  * 1. Duty Status Toggle (Online / Offline)
@@ -145,12 +145,13 @@ function updateDutyUI() {
   }
   if (text) {
     text.innerHTML = DRIVER_STATE.isOnline
-      ? `<strong style="color: #15803d;">ONLINE</strong> · Ready for Farmgate Dispatches`
-      : `<strong style="color: #64748b;">OFFLINE</strong> · Duty Paused`;
+      ? '<strong style="color: #15803d;">ONLINE</strong>'
+      : '<strong style="color: #64748b;">OFFLINE</strong>';
   }
   if (btn) {
     btn.textContent = DRIVER_STATE.isOnline ? 'Go Offline' : 'Go Online';
     btn.className = DRIVER_STATE.isOnline ? 'btn btn-outline btn-sm' : 'btn btn-primary btn-sm';
+    btn.style.opacity = '1';
   }
   if (offersSection) {
     offersSection.style.opacity = DRIVER_STATE.isOnline ? '1' : '0.4';
@@ -247,7 +248,25 @@ function renderDriverMissionStep() {
   if (distEl) distEl.textContent = cur.dist;
   if (etaEl) etaEl.textContent = cur.eta;
 
-  // Update stop card highlights
+  // Update horizontal smart contract milestones (Matching Buyer/Farmer theme)
+  for (let m = 1; m <= 4; m++) {
+    const msStep = document.getElementById(`ms-step-${m}`);
+    const msCircle = document.getElementById(`ms-circle-${m}`);
+    if (msStep) {
+      if (m < cur.stopNum) {
+        msStep.className = 'milestone-step completed';
+        if (msCircle) msCircle.textContent = '✓';
+      } else if (m === cur.stopNum) {
+        msStep.className = 'milestone-step active';
+        if (msCircle) msCircle.textContent = `${m === 4 ? '4' : m}`;
+      } else {
+        msStep.className = 'milestone-step pending';
+        if (msCircle) msCircle.textContent = `${m === 4 ? '4' : m}`;
+      }
+    }
+  }
+
+  // Update stop card highlights if present
   for (let s = 1; s <= 4; s++) {
     const card = document.getElementById(`stop-card-${s}`);
     const badge = document.getElementById(`stop-badge-${s}`);
@@ -376,6 +395,13 @@ function requestInstantUpiPayout() {
 // ----------------------------------------------------
 // 7. MODALS
 // ----------------------------------------------------
+function openPODModal(trackingId) {
+  const otpInput = document.getElementById('pod-otp-input');
+  if (otpInput) otpInput.value = '';
+  clearDriverSignature();
+  openModal('modal-pod-verification');
+}
+
 function openDriverSOSModal() {
   openModal('modal-driver-sos');
 }

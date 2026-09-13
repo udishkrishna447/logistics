@@ -123,6 +123,9 @@ const LogisticsTracking = {
       }
       this.map = null;
     }
+    if (container) {
+      container._leaflet_id = null;
+    }
 
     if (this.liveMotionInterval) {
       clearInterval(this.liveMotionInterval);
@@ -144,10 +147,10 @@ const LogisticsTracking = {
       attributionControl: false
     }).setView([vehiclePos.lat, vehiclePos.lng], 12);
 
-    // High-resolution CartoDB Voyager tiles (Soft, clean Google Maps styling)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // Clean OpenStreetMap tiles (Crystal clear road geometry, zero watermarks)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd'
+      attribution: '© OpenStreetMap contributors'
     }).addTo(this.map);
 
     // 1. Pickup Pin Marker(s) - Supports Multi-Stop Farmer Cluster
