@@ -2,19 +2,3 @@ Thumbs.db
 .DS_Store
 *.log
 .vscode/
-
-# Ignore other modules
-admin log mod/
-buyer log mod/
-farmer log mod/
-
-# Ignore non-asset files in transporter log mod
-transporter log mod/css/
-transporter log mod/js/
-transporter log mod/index.html
-transporter log mod/README.md
-
-# Ignore root files
-/index.html
-/README.md
-
