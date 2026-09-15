@@ -398,7 +398,7 @@ const BookingStore = {
  */
 const AuthSession = {
   getRole: function() {
-    return localStorage.getItem(BookingStore.SESSION_KEY) || 'TRUCK'; // Default to Truck if first visit
+    return localStorage.getItem(BookingStore.SESSION_KEY) || null;
   },
 
   setRole: function(role) {

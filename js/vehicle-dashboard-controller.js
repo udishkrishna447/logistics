@@ -1,319 +1,399 @@
 /**
- * AgriNex Vehicle Dashboard Controller
- * Handles:
- * 1. Role-based Login & Dashboard Isolation (Truck, Normal Vehicle, EV, Customer)
- * 2. Real-time Customer Load Validation
- * 3. Booking Routing, Acceptance, Rejection & POD Completion
- * 4. EV Nearby Charging Station Locator & Navigation
+ * AgriNex Unified Vehicle Controller & Role Dispatch Engine
+ * Provides the same options across all vehicle logins:
+ * 1. Active Mission & Map
+ * 2. Duty & Profile
+ * 3. Shift Earnings & Instant UPI
+ * 4. Nearby Load Broadcasts (capacity-filtered)
+ * 5. POD Handover (OTP + Digital Signature Canvas)
+ * 6. Emergency SOS
+ * 7. Nearby EV Charging Stations (exclusive to EV)
+ * 8. Fleet Login Gateway Screen (before entering dashboard)
  */
 
-// Active state
 let currentActiveRole = 'TRUCK';
-let currentActiveTab = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', function() {
   initVehicleSystem();
 });
 
 function initVehicleSystem() {
-  // 1. Determine active role from storage or gateway
-  const savedRole = AuthSession.getRole();
-  if (savedRole) {
+  // 1. Setup Customer Booking Form Real-time Validation
+  setupCustomerBookingValidation();
+
+  // 2. Check saved session role
+  let savedRole = null;
+  try {
+    savedRole = localStorage.getItem('agrinex_active_session_role');
+  } catch(e) {}
+
+  if (savedRole && (savedRole === 'TRUCK' || savedRole === 'NORMAL' || savedRole === 'EV')) {
     loginAsRole(savedRole, false);
   } else {
     showLoginGateway();
   }
-
-  // 2. Setup Customer Booking Form Real-time Validation
-  setupCustomerBookingValidation();
-
-  // 3. Render initial bookings
-  renderRoleBookings();
 }
 
 /**
- * Switch Active User Role
+ * Login As Role
  */
-function loginAsRole(role, notify = true) {
-  currentActiveRole = role;
-  AuthSession.setRole(role);
+function loginAsRole(roleKey, notify = true) {
+  if (!roleKey) roleKey = 'TRUCK';
+  currentActiveRole = roleKey;
 
-  // Hide Login Gateway
+  try {
+    localStorage.setItem('agrinex_active_session_role', roleKey);
+  } catch(e) {}
+
+  // 1. Hide Login Gateway Screen
   const gateway = document.getElementById('login-gateway-screen');
   if (gateway) gateway.style.display = 'none';
 
-  // Show App Layout
+  // 2. Show Main Layout
   const appLayout = document.querySelector('.app-layout');
   if (appLayout) appLayout.style.display = 'flex';
 
-  // Hide all vehicle sidebars
-  document.querySelectorAll('.role-sidebar').forEach(el => el.style.display = 'none');
+  const profile = (typeof AuthSession !== 'undefined') ? AuthSession.getDriverProfile(roleKey) : null;
 
-  // Hide all vehicle dashboard containers
-  document.querySelectorAll('.role-dashboard-container').forEach(el => el.style.display = 'none');
+  // 3. Update Top Role Badge
+  const topBadge = document.getElementById('top-role-badge');
+  const subtitle = document.getElementById('sidebar-role-subtitle');
+  const evNav = document.getElementById('nav-item-ev-charging');
 
-  // Show active role sidebar & container
-  const activeSidebar = document.getElementById(`sidebar-${role.toLowerCase()}`);
-  if (activeSidebar) activeSidebar.style.display = 'flex';
+  if (roleKey === 'TRUCK') {
+    if (topBadge) {
+      topBadge.style.background = '#e8f5ed';
+      topBadge.style.color = '#0c5a36';
+      topBadge.style.borderColor = '#bbf7d0';
+      topBadge.innerHTML = '🚚 Heavy Truck · Tata Ace 1.5T · TN-33-AX-8910 (> 100 kg / Tonnes)';
+    }
+    if (subtitle) subtitle.textContent = 'Truck Fleet Console';
+    if (evNav) evNav.style.display = 'none';
+  } else if (roleKey === 'NORMAL') {
+    if (topBadge) {
+      topBadge.style.background = '#eff6ff';
+      topBadge.style.color = '#1d4ed8';
+      topBadge.style.borderColor = '#bfdbfe';
+      topBadge.innerHTML = '🚗 Normal Vehicle · Mahindra Bolero · TN-33-BZ-4521 (10 kg – 100 kg)';
+    }
+    if (subtitle) subtitle.textContent = 'Normal Fleet Console';
+    if (evNav) evNav.style.display = 'none';
+  } else if (roleKey === 'EV') {
+    if (topBadge) {
+      topBadge.style.background = '#ecfdf5';
+      topBadge.style.color = '#059669';
+      topBadge.style.borderColor = '#a7f3d0';
+      topBadge.innerHTML = '⚡ EV Vehicle · Tata Ace EV · TN-33-EV-7721 (10 kg – 30 kg)';
+    }
+    if (subtitle) subtitle.textContent = 'EV Eco-Fleet Console';
+    if (evNav) evNav.style.display = 'flex';
+  }
 
-  const activeContainer = document.getElementById(`container-${role.toLowerCase()}`);
-  if (activeContainer) activeContainer.style.display = 'block';
+  // 4. Update Sidebar Mini Profile
+  if (profile) {
+    const mName = document.getElementById('mini-name');
+    const mVeh = document.getElementById('mini-vehicle');
+    const mAv = document.getElementById('mini-avatar');
+    if (mName) mName.textContent = profile.name;
+    if (mVeh) mVeh.textContent = `${profile.vehicle} · ${profile.regNumber}`;
+    if (mAv) mAv.textContent = profile.avatarInitials;
+  }
 
-  // Update Top Navbar Role Badge
-  updateNavbarRoleBadge(role);
+  // 5. Update Duty & Profile Section
+  updateDutyProfileRoleData(roleKey);
 
-  // Default to Dashboard tab
-  switchRoleTab('dashboard');
+  // 6. Update Nearby Loads Section
+  renderRoleNearbyLoads(roleKey);
 
-  // Refresh role data
-  renderRoleBookings();
+  // 7. Update Active Mission Banner
+  updateRoleMissionBanner(roleKey);
 
-  if (notify) {
-    const profile = AuthSession.getDriverProfile(role);
+  // 8. Switch to default Active Mission module
+  if (typeof switchTransporterTab === 'function') {
+    switchTransporterTab('active-mission');
+  }
+
+  if (notify && profile && typeof showToast === 'function') {
     showToast('success', `Logged in as ${profile.name}`, `Accessing ${profile.roleTitle}`);
   }
 }
 
 /**
- * Show Login Gateway (Logout)
+ * Show Login Gateway
  */
 function showLoginGateway() {
-  AuthSession.setRole(null);
   currentActiveRole = null;
-
-  const appLayout = document.querySelector('.app-layout');
-  if (appLayout) appLayout.style.display = 'none';
+  try {
+    localStorage.removeItem('agrinex_active_session_role');
+  } catch(e) {}
 
   const gateway = document.getElementById('login-gateway-screen');
   if (gateway) gateway.style.display = 'flex';
 }
 
 /**
- * Update Top Navbar Role Info & Pill Selector
+ * Update Duty & Profile Section with Role Data
  */
-function updateNavbarRoleBadge(role) {
-  const profile = AuthSession.getDriverProfile(role);
-  const badgeEl = document.getElementById('top-role-badge');
-  const userMiniName = document.querySelectorAll('.active-user-name');
-  const userMiniVeh = document.querySelectorAll('.active-user-vehicle');
-  const userMiniInit = document.querySelectorAll('.active-user-avatar');
+function updateDutyProfileRoleData(roleKey) {
+  if (typeof AuthSession === 'undefined') return;
+  const profile = AuthSession.getDriverProfile(roleKey);
+  if (!profile) return;
 
-  if (badgeEl) {
-    let icon = '🚚';
-    let color = '#0c5a36';
-    let bg = '#e8f5ed';
-    let border = '#bbf7d0';
+  // Header circle & names
+  const avCircle = document.querySelector('.driver-avatar-circle');
+  if (avCircle) avCircle.textContent = profile.avatarInitials;
 
-    if (role === 'NORMAL') {
-      icon = '🚗';
-      color = '#1d4ed8';
-      bg = '#eff6ff';
-      border = '#bfdbfe';
-    } else if (role === 'EV') {
-      icon = '⚡';
-      color = '#059669';
-      bg = '#ecfdf5';
-      border = '#a7f3d0';
-    } else if (role === 'CUSTOMER') {
-      icon = '📦';
-      color = '#d97706';
-      bg = '#fffbeb';
-      border = '#fde68a';
-    }
+  const nameEl = document.querySelector('[data-i18n="driverNameTitle"]');
+  if (nameEl) nameEl.textContent = profile.name;
 
-    badgeEl.style.color = color;
-    badgeEl.style.backgroundColor = bg;
-    badgeEl.style.borderColor = border;
-    badgeEl.innerHTML = `${icon} ${profile.vehicle} · ${profile.regNumber} (${profile.capacityRange})`;
-  }
+  const subEl = document.querySelector('[data-i18n="driverSub"]');
+  if (subEl) subEl.textContent = `${profile.vehicle} · ${profile.regNumber} · Rating ${profile.rating}`;
 
-  userMiniName.forEach(el => el.textContent = profile.name);
-  userMiniVeh.forEach(el => el.textContent = `${profile.vehicle} · ${profile.regNumber}`);
-  userMiniInit.forEach(el => el.textContent = profile.avatarInitials);
+  // Find Telematics card and update based on role
+  const specsContainer = document.querySelector('#view-duty-profile .card:nth-of-type(2)');
+  if (!specsContainer) return;
 
-  // Update quick role switcher dropdown/buttons
-  document.querySelectorAll('.role-switcher-btn').forEach(btn => {
-    if (btn.dataset.role === role) {
-      btn.classList.add('active-role');
-    } else {
-      btn.classList.remove('active-role');
-    }
-  });
-}
-
-/**
- * Switch Tab within Active Vehicle Dashboard
- */
-function switchRoleTab(tabName) {
-  currentActiveTab = tabName;
-  if (!currentActiveRole) return;
-
-  const role = currentActiveRole.toLowerCase();
-
-  // 1. Update Sidebar Active State
-  document.querySelectorAll(`#sidebar-${role} .sidebar-item`).forEach(item => {
-    item.classList.remove('active');
-  });
-  const activeNavItem = document.getElementById(`${role}-nav-${tabName}`);
-  if (activeNavItem) activeNavItem.classList.add('active');
-
-  // 2. Hide all views in active container
-  document.querySelectorAll(`#container-${role} .vehicle-view-panel`).forEach(panel => {
-    panel.style.display = 'none';
-  });
-
-  // 3. Show selected view
-  const targetView = document.getElementById(`${role}-view-${tabName}`);
-  if (targetView) targetView.style.display = 'block';
-
-  // 4. Scroll smoothly to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // 5. Special handlers
-  if (tabName === 'active' || tabName === 'dashboard') {
-    // Invalidate map size if map canvas exists
-    setTimeout(() => {
-      if (typeof LogisticsTracking !== 'undefined') {
-        if (LogisticsTracking.map && typeof LogisticsTracking.map.invalidateSize === 'function') {
-          LogisticsTracking.map.invalidateSize();
-        }
-        if (window.google && LogisticsTracking.googleMap) {
-          google.maps.event.trigger(LogisticsTracking.googleMap, 'resize');
-          if (typeof LogisticsTracking.recenterOnVehicle === 'function') {
-            LogisticsTracking.recenterOnVehicle();
-          }
-        }
-      }
-    }, 150);
-  }
-
-  // If EV Nearby Charging Stations tab is selected, render charging stations
-  if (role === 'ev' && tabName === 'charging-stations') {
-    renderEVChargingStations();
-  }
-}
-
-/**
- * Render Bookings strictly filtered for active vehicle role
- */
-function renderRoleBookings() {
-  if (!currentActiveRole) return;
-
-  const role = currentActiveRole; // 'TRUCK', 'NORMAL', 'EV'
-  const bookings = BookingStore.getBookingsByVehicle(role);
-
-  const availableList = bookings.filter(b => b.status === 'AVAILABLE');
-  const activeList = bookings.filter(b => b.status === 'IN_TRANSIT');
-  const completedList = bookings.filter(b => b.status === 'COMPLETED');
-
-  // Update counts on badges
-  const availCountEl = document.getElementById(`${role.toLowerCase()}-avail-count`);
-  if (availCountEl) availCountEl.textContent = `${availableList.length} Available`;
-
-  const activeCountEl = document.getElementById(`${role.toLowerCase()}-active-count`);
-  if (activeCountEl) activeCountEl.textContent = `${activeList.length} Active`;
-
-  // 1. Render Available Bookings List
-  const bookingsContainer = document.getElementById(`${role.toLowerCase()}-bookings-list`);
-  if (bookingsContainer) {
-    if (availableList.length === 0) {
-      bookingsContainer.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e1;">
-          <div style="font-size: 2.5rem;">📭</div>
-          <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-top: 8px;">No Pending Bookings for ${role}</div>
-          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">New bookings created by customers matching this vehicle's capacity will appear here automatically.</div>
-          <button class="btn btn-outline btn-sm" onclick="openCustomerBookingModal()" style="margin-top: 14px;">+ Create Sample Booking</button>
+  let specsHTML = '';
+  if (roleKey === 'TRUCK') {
+    specsHTML = `
+      <div class="card-header">
+        <div class="card-title">🚛 Heavy Fleet Vehicle Telematics & Axle Specs</div>
+        <span class="badge" style="background: #e8f5ed; color: #0c5a36; font-weight: 800;">Heavy Commercial Certified</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">⚖️</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">GROSS PAYLOAD CAPACITY</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #0c5a36;">1.5T Payload / 2.8T GVW</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Enforced: > 100 kg & Multi-Tonnes</div>
+          </div>
         </div>
-      `;
-    } else {
-      bookingsContainer.innerHTML = availableList.map(b => `
-        <div class="booking-card ${role.toLowerCase()}-card" style="background: #fff; border: 1px solid var(--border-default); border-left: 5px solid ${getRoleColor(role)}; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">💳</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">NHAI COMMERCIAL FASTAG</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #0284c7;">₹1,240 Balance</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Auto-Recharge Active</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">🛞</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">AXLE TIRE TPMS</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-main);">42 PSI</div>
+            <div style="font-size: 0.72rem; color: #16a34a;">Commercial Load Rated</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">📄</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">COMMERCIAL PERMIT</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #10b981;">Valid Feb 2027</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">All India Heavy Goods Carriage</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (roleKey === 'NORMAL') {
+    specsHTML = `
+      <div class="card-header">
+        <div class="card-title">🚗 Petrol / Diesel Vehicle Status & Telematics</div>
+        <span class="badge" style="background: #eff6ff; color: #1d4ed8; font-weight: 800;">BS-VI Diesel Certified</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">⚖️</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">MEDIUM LOAD CAPACITY</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #1d4ed8;">10 kg to 100 kg</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Ideal for Spices, Oils & Parcels</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">⛽</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">DIESEL FUEL TANK</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #0284c7;">68% (340 km Range)</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">DEF / AdBlue: 85% Optimal</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">🛞</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">TIRE TPMS</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-main);">34 PSI</div>
+            <div style="font-size: 0.72rem; color: #16a34a;">Optimal Cold Pressure</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">📄</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">COMMERCIAL PERMIT</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #10b981;">Valid Oct 2026</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Medium Goods Commercial Permit</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (roleKey === 'EV') {
+    specsHTML = `
+      <div class="card-header">
+        <div class="card-title">⚡ Zero-Emission EV Battery & Charger Telematics</div>
+        <span class="badge" style="background: #ecfdf5; color: #059669; font-weight: 800;">Eco Green Certified</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">⚖️</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">LIGHT ECO CAPACITY</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #059669;">10 kg to 30 kg</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Mushrooms, Berries, Microgreens</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">🔋</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">TRACTION BATTERY SOC</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #16a34a;">84% (110 km Range)</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Battery Health: 98% Optimal</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">🔌</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">CHARGING STANDARD</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: var(--text-main);">CCS2 60kW DC</div>
+            <div style="font-size: 0.72rem; color: #16a34a;">Fast 0-80% in 45 mins</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 16px; display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 2.2rem;">🌱</span>
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 800;">GREEN ECO CREDITS</div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #059669;">18.4 kg CO₂ Saved</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Zero Carbon Green Permit</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  specsContainer.innerHTML = specsHTML;
+}
+
+/**
+ * Render Nearby Loads for Selected Role
+ */
+function renderRoleNearbyLoads(roleKey) {
+  const container = document.getElementById('trip-offers-section');
+  if (!container || typeof BookingStore === 'undefined') return;
+
+  const bookings = BookingStore.getBookingsByVehicle(roleKey);
+  const availableBookings = bookings.filter(b => b.status === 'AVAILABLE');
+
+  let capacityNote = '';
+  let themeColor = '#0c5a36';
+
+  if (roleKey === 'TRUCK') {
+    capacityNote = 'Showing Heavy Agricultural Cargo (> 100 kg & Multi-Tonnes)';
+    themeColor = '#0c5a36';
+  } else if (roleKey === 'NORMAL') {
+    capacityNote = 'Showing Medium Agricultural Produce (10 kg to 100 kg)';
+    themeColor = '#1d4ed8';
+  } else if (roleKey === 'EV') {
+    capacityNote = 'Showing Light Eco-Deliveries & Produce (10 kg to 30 kg)';
+    themeColor = '#059669';
+  }
+
+  let cardsHTML = '';
+  if (availableBookings.length === 0) {
+    cardsHTML = `
+      <div style="text-align: center; padding: 40px 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; margin-top: 14px;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">📦</div>
+        <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">No Broadcasts Currently Available</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+          All scheduled lots in this vehicle category have been accepted or completed.
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="openCustomerBookingModal()" style="margin-top: 14px; font-weight: 800; color: ${themeColor}; border-color: ${themeColor};">
+          + Place Test Consignment Booking
+        </button>
+      </div>
+    `;
+  } else {
+    cardsHTML = `
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+        ${availableBookings.map(b => `
+          <div class="trip-offer-card trip-offer-highlight" style="border-left: 4px solid ${themeColor};">
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="badge" style="background: ${getRoleBg(role)}; color: ${getRoleColor(role)}; font-weight: 800; font-size: 0.75rem;">${b.id}</span>
-                <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700; font-size: 0.75rem;">Weight: ${b.weightDisplay}</span>
-                <span style="font-size: 0.78rem; color: var(--text-muted);">🕒 ${b.dateTime}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge" style="background: #f0fdf4; color: ${themeColor}; border: 1px solid #bbf7d0; font-size: 0.72rem; font-weight: 800;">
+                  ${b.id} · ${b.weightDisplay}
+                </span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">${b.dateTime}</span>
               </div>
-              <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-top: 6px;">${b.item}</div>
-              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">👤 Customer: <strong>${b.customerName}</strong> (${b.customerPhone})</div>
+              <div class="trip-offer-title" style="margin-top: 6px; font-weight: 800;">🌾 ${b.item}</div>
+              <div class="trip-offer-route" style="margin-top: 4px; font-size: 0.85rem; color: #334155;">📍 ${b.pickup} ➔ ${b.delivery}</div>
+              <div style="font-size: 0.78rem; color: #15803d; margin-top: 4px;">Farmer: ${b.customerName} · ${b.customerPhone}</div>
             </div>
-            <div style="text-align: right;">
-              <div style="font-size: 1.4rem; font-weight: 800; color: #0c5a36;">${b.fare}</div>
-              <div style="font-size: 0.75rem; color: #16a34a; font-weight: 700;">Est. Payout</div>
-            </div>
-          </div>
-
-          <div style="background: #f8fafc; border-radius: 8px; padding: 12px; margin: 12px 0; font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px;">
-            <div>📍 <strong>Pickup:</strong> ${b.pickup}</div>
-            <div>🏁 <strong>Delivery:</strong> ${b.delivery}</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">🛣️ <strong>Route:</strong> ${b.route} (${b.distanceKm} km)</div>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">📝 ${b.notes}</div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-outline btn-sm" onclick="handleRejectBooking('${b.id}')" style="color: #dc2626; border-color: #fca5a5;">Decline</button>
-              <button class="btn btn-primary btn-sm" onclick="handleAcceptBooking('${b.id}')" style="background: ${getRoleColor(role)}; border-color: ${getRoleColor(role)}; font-weight: 800; padding: 6px 16px;">Accept Booking ➔</button>
+            <div class="trip-offer-pay">
+              <div class="trip-offer-amt" style="font-size: 1.4rem; color: ${themeColor}; font-weight: 800;">${b.fare}</div>
+              <div class="trip-offer-actions" style="margin-top: 8px; display: flex; gap: 6px;">
+                <button class="btn btn-primary btn-sm" onclick="handleAcceptBooking('${b.id}')" style="background: ${themeColor}; border-color: ${themeColor}; font-weight: 800;">
+                  Accept
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="handleRejectBooking('${b.id}')">
+                  Decline
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
-    }
+        `).join('')}
+      </div>
+    `;
   }
 
-  // 2. Render Completed Deliveries List
-  const completedContainer = document.getElementById(`${role.toLowerCase()}-completed-list`);
-  if (completedContainer) {
-    if (completedList.length === 0) {
-      completedContainer.innerHTML = `
-        <div style="text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.9rem;">
-          No deliveries completed in this shift yet.
+  container.innerHTML = `
+    <div class="card-header">
+      <div>
+        <div class="card-title">📡 Nearby Load Broadcasts (Dispatch Board)</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+          ${capacityNote} · <strong>${availableBookings.length} Active Loads</strong>
         </div>
-      `;
-    } else {
-      completedContainer.innerHTML = `
-        <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
-          <thead>
-            <tr style="text-align: left; border-bottom: 2px solid var(--border-default); color: var(--text-muted);">
-              <th style="padding: 10px 8px;">Booking ID</th>
-              <th style="padding: 10px 8px;">Item & Load</th>
-              <th style="padding: 10px 8px;">Customer</th>
-              <th style="padding: 10px 8px;">Route</th>
-              <th style="padding: 10px 8px;">Payout</th>
-              <th style="padding: 10px 8px;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${completedList.map(b => `
-              <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 12px 8px; font-weight: 800;">${b.id}</td>
-                <td style="padding: 12px 8px;">${b.item} <br><span style="font-size: 0.75rem; color: var(--text-muted);">${b.weightDisplay}</span></td>
-                <td style="padding: 12px 8px;">${b.customerName}</td>
-                <td style="padding: 12px 8px;">${b.route}</td>
-                <td style="padding: 12px 8px; font-weight: 800; color: #16a34a;">${b.fare}</td>
-                <td style="padding: 12px 8px;"><span class="badge" style="background: #f0fdf4; color: #16a34a;">✅ Delivered (${b.completedAt || 'Today'})</span></td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    }
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="btn btn-outline btn-sm" onclick="openCustomerBookingModal()" style="font-weight: 700; color: ${themeColor}; border-color: ${themeColor};">
+          + Place Consignment
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="renderRoleNearbyLoads('${roleKey}'); showToast('info', 'Refreshed', 'Refreshed active loads radar.');">
+          🔄 Refresh
+        </button>
+      </div>
+    </div>
+    ${cardsHTML}
+  `;
+}
+
+/**
+ * Update Active Mission Header Banner
+ */
+function updateRoleMissionBanner(roleKey) {
+  const codeEl = document.querySelector('[data-i18n="missionCode"]');
+  const titleEl = document.querySelector('[data-i18n="missionTitle"]');
+  const routeEl = document.querySelector('[data-i18n="missionRouteText"]');
+
+  if (roleKey === 'TRUCK') {
+    if (codeEl) codeEl.textContent = 'CLUSTER-AGX-801';
+    if (titleEl) titleEl.textContent = '3-Village Tomato Collection (1.2 Tonnes · Net ₹1,650)';
+    if (routeEl) routeEl.textContent = 'Route: Thindal ➔ Perundurai ➔ Bhavani ➔ Coimbatore Mandi';
+  } else if (roleKey === 'NORMAL') {
+    if (codeEl) codeEl.textContent = 'CLUSTER-NRM-401';
+    if (titleEl) titleEl.textContent = 'Regional Spices & Cold-Pressed Sesame Oils (65 kg · Net ₹850)';
+    if (routeEl) routeEl.textContent = 'Route: Gobichettipalayam Spices Hub ➔ Perundurai ➔ Erode Central APMC';
+  } else if (roleKey === 'EV') {
+    if (codeEl) codeEl.textContent = 'CLUSTER-EV-101';
+    if (titleEl) titleEl.textContent = 'Chilled Button Mushrooms & Strawberries (25 kg · Net ₹480)';
+    if (routeEl) routeEl.textContent = 'Route: Thindal Organic Polyhouse ➔ Perundurai FPO ➔ Coimbatore Gourmet Mart';
   }
-}
-
-function getRoleColor(role) {
-  if (role === 'TRUCK') return '#0c5a36';
-  if (role === 'NORMAL') return '#1d4ed8';
-  if (role === 'EV') return '#059669';
-  return '#475569';
-}
-
-function getRoleBg(role) {
-  if (role === 'TRUCK') return '#e8f5ed';
-  if (role === 'NORMAL') return '#eff6ff';
-  if (role === 'EV') return '#ecfdf5';
-  return '#f1f5f9';
 }
 
 /**
@@ -322,9 +402,11 @@ function getRoleBg(role) {
 function handleAcceptBooking(id) {
   const b = BookingStore.acceptBooking(id);
   if (b) {
-    showToast('success', 'Booking Accepted!', `${b.id} is now in Active Deliveries. Routing GPS to pickup.`);
-    renderRoleBookings();
-    switchRoleTab('active');
+    showToast('success', 'Booking Accepted!', `${b.id} is now added to your Active Transit Schedule.`);
+    renderRoleNearbyLoads(currentActiveRole);
+    if (typeof switchTransporterTab === 'function') {
+      switchTransporterTab('active-mission');
+    }
   }
 }
 
@@ -333,8 +415,8 @@ function handleAcceptBooking(id) {
  */
 function handleRejectBooking(id) {
   BookingStore.rejectBooking(id);
-  showToast('info', 'Booking Declined', `${id} removed from available list.`);
-  renderRoleBookings();
+  showToast('info', 'Booking Declined', `${id} removed from your broadcast list.`);
+  renderRoleNearbyLoads(currentActiveRole);
 }
 
 /**
@@ -351,11 +433,11 @@ function setupCustomerBookingValidation() {
     let selectedVehicle = 'TRUCK';
     vehicleRadios.forEach(r => { if (r.checked) selectedVehicle = r.value; });
 
-    const rawVal = parseFloat(weightInput.value);
+    const rawVal = parseFloat(weightInput ? weightInput.value : 0);
     const unit = unitSelect ? unitSelect.value : 'kg';
     const weightInKg = unit === 'tonnes' ? rawVal * 1000 : rawVal;
 
-    if (!weightInput.value || isNaN(rawVal) || rawVal <= 0) {
+    if (!weightInput || !weightInput.value || isNaN(rawVal) || rawVal <= 0) {
       if (errorBox) {
         errorBox.style.display = 'none';
         errorBox.textContent = '';
@@ -434,11 +516,13 @@ function submitCustomerBooking(e) {
   // Success Notification
   showToast('success', '🎉 Booking Dispatched!', `Booking #${res.booking.id} routed exclusively to ${selectedVehicle} Fleet Dashboard.`);
 
-  // Auto-switch to that vehicle dashboard so the user can verify immediately
+  // Auto-switch to that vehicle dashboard
   setTimeout(() => {
     loginAsRole(selectedVehicle, false);
-    switchRoleTab('bookings');
-  }, 600);
+    if (typeof switchTransporterTab === 'function') {
+      switchTransporterTab('nearby-loads');
+    }
+  }, 500);
 }
 
 /**
@@ -446,7 +530,7 @@ function submitCustomerBooking(e) {
  */
 function renderEVChargingStations(query = '') {
   const container = document.getElementById('ev-charging-stations-grid');
-  if (!container) return;
+  if (!container || typeof BookingStore === 'undefined') return;
 
   const stations = BookingStore.getChargingStations(query);
 
@@ -492,7 +576,8 @@ function renderEVChargingStations(query = '') {
 }
 
 function handleSearchChargingStations() {
-  const q = document.getElementById('search-ev-chargers').value;
+  const searchInput = document.getElementById('search-ev-chargers');
+  const q = searchInput ? searchInput.value : '';
   renderEVChargingStations(q);
 }
 
@@ -509,10 +594,17 @@ function openCustomerBookingModal() {
   if (modal) modal.style.display = 'flex';
 }
 
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'none';
+}
+
 // Global bridges
 window.loginAsRole = loginAsRole;
 window.showLoginGateway = showLoginGateway;
-window.switchRoleTab = switchRoleTab;
+window.updateDutyProfileRoleData = updateDutyProfileRoleData;
+window.renderRoleNearbyLoads = renderRoleNearbyLoads;
+window.updateRoleMissionBanner = updateRoleMissionBanner;
 window.handleAcceptBooking = handleAcceptBooking;
 window.handleRejectBooking = handleRejectBooking;
 window.submitCustomerBooking = submitCustomerBooking;
@@ -520,3 +612,4 @@ window.renderEVChargingStations = renderEVChargingStations;
 window.handleSearchChargingStations = handleSearchChargingStations;
 window.detectCurrentLocationChargers = detectCurrentLocationChargers;
 window.openCustomerBookingModal = openCustomerBookingModal;
+window.closeModal = closeModal;
