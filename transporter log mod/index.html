@@ -28,37 +28,6 @@
 
   <style>
     /* Role Isolation Gateway & Header Badges */
-    .role-switcher-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 9999px;
-      padding: 3px 6px;
-    }
-    .role-switcher-btn {
-      border: none;
-      background: transparent;
-      padding: 5px 12px;
-      border-radius: 9999px;
-      font-weight: 700;
-      font-size: 0.78rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      color: #475569;
-      transition: all 0.2s;
-    }
-    .role-switcher-btn:hover {
-      background: #e2e8f0;
-    }
-    .role-switcher-btn.active-role {
-      background: #0c5a36;
-      color: #ffffff;
-      box-shadow: 0 2px 6px rgba(12, 90, 54, 0.25);
-    }
 
     /* Gateway Landing Screen */
     .login-gateway-overlay {
@@ -464,14 +433,6 @@
             🚚 Tata Ace 1.5T · TN-33-AX-8910 (> 100 kg)
           </span>
 
-          <!-- 1-Click Role Switcher Pill Bar (For Evaluators & Testing) -->
-          <div class="role-switcher-bar">
-            <span style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin: 0 4px;">Role:</span>
-            <button class="role-switcher-btn active-role" data-role="TRUCK" onclick="loginAsRole('TRUCK')">🚚 Truck</button>
-            <button class="role-switcher-btn" data-role="NORMAL" onclick="loginAsRole('NORMAL')">🚗 Normal</button>
-            <button class="role-switcher-btn" data-role="EV" onclick="loginAsRole('EV')">⚡ EV</button>
-            <button class="role-switcher-btn" onclick="openCustomerBookingModal()" style="color: #0c5a36; font-weight: 800;">📦 + Book</button>
-          </div>
         </div>
 
         <div class="nav-right" style="display: flex; align-items: center; gap: 12px;">
