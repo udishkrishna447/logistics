@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgriNex | Agricultural Logistics & Driver Console</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title data-i18n="pageTitle">AgriNex Transporter & Driver Console - Smart Agricultural Logistics</title>
   
-  <!-- Inter Font -->
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/wheat-logo.png">
+
+  <!-- Core Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet Map CSS for Real GPS Live Tracking -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
-  <!-- Google Maps JavaScript API with official API Key -->
+
+  <!-- Google Maps JavaScript API with Geometry Library -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBC_GMFjJ5bCvMW0RDMm5TI3nkVGzVq248&libraries=geometry&callback=onGoogleMapsApiLoaded" async defer></script>
 
-  <!-- Logistics Application Core Styles -->
-  <link rel="stylesheet" href="css/logistics.css" />
-  <link rel="stylesheet" href="css/driver.css" />
+  <!-- Base & Theme CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/logistics.css">
+  <link rel="stylesheet" href="css/driver-console.css">
 
   <style>
-
     /* Tab View Animations & Transitions */
     .transporter-module-view {
       animation: tabFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -74,193 +78,15 @@
       align-items: center;
       gap: 8px;
     }
-  
-    /* Gateway Landing Screen */
-    .login-gateway-overlay {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, #063c22 0%, #0a4d2c 50%, #06331d 100%);
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      overflow-y: auto;
-    }
-    .login-gateway-card {
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 32px;
-      max-width: 980px;
-      width: 100%;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .gateway-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      margin-top: 24px;
-    }
-    .gateway-role-box {
-      border: 2px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 22px;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: #ffffff;
-    }
-    .gateway-role-box:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
-    }
-    .gateway-role-box.truck-box:hover {
-      border-color: #0c5a36;
-    }
-    .gateway-role-box.normal-box:hover {
-      border-color: #1d4ed8;
-    }
-    .gateway-role-box.ev-box:hover {
-      border-color: #059669;
-    }
-    .capacity-pill {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      display: inline-block;
-    }
-
-    /* Modal Backdrop Fix */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 10000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal-box {
-      background: #fff;
-      border-radius: 16px;
-      max-width: 580px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-
   </style>
 </head>
 <body class="driver-body">
 
-  <!-- ==================================================== -->
-  <!-- 1. AUTHENTICATION & VEHICLE ROLE GATEWAY SCREEN       -->
-  <!-- ==================================================== -->
-  <div class="login-gateway-overlay" id="login-gateway-screen" style="display: flex;">
-    <div class="login-gateway-card">
-      <div style="text-align: center;">
-        <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-          <img src="assets/images/wheat-logo.png" alt="AgriNex" style="width: 44px; height: 44px; border-radius: 10px; background: #fff; padding: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%2315803d%22><path d=%22M12 2L4 7v10l8 5 8-5V7z%22/></svg>'">
-          <h1 style="font-size: 1.8rem; font-weight: 800; color: #0c5a36; margin: 0;">Agri<span style="color: #4ade80;">Nex</span> Logistics</h1>
-        </div>
-        <div style="font-size: 0.95rem; color: #64748b; font-weight: 600;">Dedicated Agricultural Fleet & Role-Based Access Control</div>
-        <p style="font-size: 0.85rem; color: #475569; max-width: 580px; margin: 10px auto 0 auto;">
-          Select your registered vehicle category to access your unified dispatch dashboard, real-time GPS routing, and cargo operations.
-        </p>
-      </div>
-
-      <div class="gateway-grid">
-        <!-- 🚚 1. TRUCK LOGIN -->
-        <div class="gateway-role-box truck-box" onclick="loginAsRole('TRUCK')">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 2.5rem;">🚚</span>
-              <span class="badge" style="background: #e8f5ed; color: #0c5a36; font-weight: 800;">Heavy Freight</span>
-            </div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0c5a36; margin: 12px 0 4px 0;">Truck Login</h3>
-            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.5; margin: 0;">
-              For heavy farm produce, bulk grains, multi-village pooled crops & wholesale Mandi transit.
-            </p>
-            <div class="capacity-pill" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;">
-              ⚖️ Capacity: > 100 kg & Multi-Tonnes (1T–10T)
-            </div>
-          </div>
-          <button class="btn btn-primary btn-sm" style="margin-top: 18px; width: 100%; background: #0c5a36; border-color: #0c5a36; font-weight: 800;">
-            Login to Truck Dashboard ➔
-          </button>
-        </div>
-
-        <!-- 🚗 2. NORMAL VEHICLE LOGIN -->
-        <div class="gateway-role-box normal-box" onclick="loginAsRole('NORMAL')">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 2.5rem;">🚗</span>
-              <span class="badge" style="background: #eff6ff; color: #1d4ed8; font-weight: 800;">Petrol / Diesel</span>
-            </div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #1d4ed8; margin: 12px 0 4px 0;">Normal Vehicle Login</h3>
-            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.5; margin: 0;">
-              For medium-weight agricultural parcels, spices, oils, honey & regional distributor supplies.
-            </p>
-            <div class="capacity-pill" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
-              ⚖️ Capacity: 10 kg to 100 kg
-            </div>
-          </div>
-          <button class="btn btn-primary btn-sm" style="margin-top: 18px; width: 100%; background: #1d4ed8; border-color: #1d4ed8; font-weight: 800;">
-            Login to Normal Vehicle ➔
-          </button>
-        </div>
-
-        <!-- ⚡ 3. EV VEHICLE LOGIN -->
-        <div class="gateway-role-box ev-box" onclick="loginAsRole('EV')">
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 2.5rem;">⚡</span>
-              <span class="badge" style="background: #ecfdf5; color: #059669; font-weight: 800;">Zero-Emission</span>
-            </div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #059669; margin: 12px 0 4px 0;">EV Vehicle Login</h3>
-            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.5; margin: 0;">
-              For light eco-deliveries, mushrooms, berries & direct <strong>Nearby Charging Station Navigation</strong>.
-            </p>
-            <div class="capacity-pill" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
-              ⚖️ Capacity: 10 kg to 30 kg
-            </div>
-          </div>
-          <button class="btn btn-primary btn-sm" style="margin-top: 18px; width: 100%; background: #059669; border-color: #059669; font-weight: 800;">
-            Login to EV Dashboard ➔
-          </button>
-        </div>
-      </div>
-
-      <!-- Customer Portal & Emergency Quick Access Bar -->
-      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="openCustomerBookingModal()" style="font-weight: 800; color: #0c5a36; border-color: #0c5a36;">
-            📦 Customer Portal: Book Agricultural Freight
-          </button>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <a href="tel:18004251234" class="btn btn-danger btn-sm" style="font-weight: 800; text-decoration: none;">
-            🚨 24/7 Highway Emergency (1800 425 1234)
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================================================== -->
-  <!-- 2. MAIN APPLICATION LAYOUT                           -->
-  <!-- ==================================================== -->
   <div class="app-layout">
     
-    <!-- LEFT SIDEBAR: UNIFIED DRIVER SHIFT & OPERATIONAL WORKFLOW -->
+    <!-- ==================================================== -->
+    <!-- LEFT SIDEBAR: DRIVER SHIFT & OPERATIONAL WORKFLOW    -->
+    <!-- ==================================================== -->
     <aside class="sidebar">
       <div>
         <!-- AgriNex Brand Header with Golden Wheat Logo Emblem -->
@@ -270,7 +96,7 @@
           </div>
           <div>
             <h1 class="brand-title">Agri<span class="brand-accent">Nex</span></h1>
-            <div class="brand-tagline" id="sidebar-role-subtitle" data-i18n="brandSubtitle">Driver Fleet Console</div>
+            <div class="brand-tagline" data-i18n="brandSubtitle">Driver Fleet Console</div>
           </div>
         </div>
 
@@ -311,43 +137,29 @@
             <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span data-i18n="navEmergencySos">Emergency SOS</span>
           </li>
-
-          <!-- 7. Nearby EV Charging Stations (Shown only for EV) -->
-          <li class="sidebar-item" id="nav-item-ev-charging" onclick="switchTransporterTab('ev-charging')" style="display: none;">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            <span>Nearby Charging Stations</span>
-          </li>
-
-          <!-- 8. Logout / Switch Vehicle -->
-          <li class="sidebar-item" id="nav-item-logout" onclick="showLoginGateway()" style="margin-top: 14px; color: #fca5a5;">
-            <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span>Exit / Switch Vehicle</span>
-          </li>
         </ul>
       </div>
 
-      <!-- Sidebar Driver Mini Profile Card -->
       <div class="sidebar-footer">
-        <div class="driver-mini-card">
-          <div class="driver-avatar-mini" id="mini-avatar">KR</div>
-          <div class="driver-info-mini">
-            <div class="driver-name-mini" id="mini-name">Karthik Raja</div>
-            <div class="driver-status-text" id="mini-status">🟢 On Shift · Online</div>
-            <div class="driver-vehicle-mini" id="mini-vehicle">Tata Ace · TN-33-AX-8910</div>
+        <div class="user-badge-mini" onclick="switchTransporterTab('duty-profile')" style="cursor: pointer;" title="View Profile">
+          <div class="user-avatar-mini">KR</div>
+          <div>
+            <div style="color: #fff; font-weight: 700; font-size: 0.9rem;" data-i18n="driverName">Karthik Raja</div>
+            <div style="color: rgba(255, 255, 255, 0.75); font-size: 0.72rem;" data-i18n="driverVehicle">Tata Ace EV · TN-33-AX-8910</div>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN CONTENT WRAPPER -->
+    <!-- MAIN WRAPPER -->
     <main class="main-wrapper">
       
       <!-- TOP NAVBAR -->
       <header class="top-navbar">
         <div class="nav-left" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <!-- Active Vehicle Badge -->
-          <span class="badge" id="top-role-badge" style="background: #e8f5ed; color: #0c5a36; border: 1px solid #bbf7d0; font-weight: 800; font-size: 0.85rem; padding: 6px 12px;">
-            🚚 Tata Ace 1.5T · TN-33-AX-8910 (> 100 kg)
+          <h1 class="page-title" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0c5a36;" data-i18n="topPageTitle">🚚 AgriNex Driver & Fleet Console</h1>
+          <span class="badge" style="background: #e8f5ed; color: #0c5a36; border: 1px solid #bbf7d0; font-weight: 800; font-size: 0.82rem;" data-i18n="driverBadgeRole">
+            Tata Ace EV · TN-33-AX-8910
           </span>
         </div>
 
@@ -360,19 +172,19 @@
             <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')" style="border: none; background: transparent; padding: 4px 10px; border-radius: 9999px; font-weight: 700; font-size: 0.78rem; cursor: pointer;">தமிழ்</button>
           </div>
 
-          <button class="btn btn-danger btn-sm" onclick="openDriverSOSModal()" style="background: #dc2626; border-color: #dc2626; font-weight: 800;">
-            🚨 SOS
-          </button>
-
-          <button class="btn btn-outline btn-sm" onclick="showLoginGateway()" style="font-size: 0.78rem;" title="Switch Account / Return to Gateway">
-            🚪 Exit
+          <button class="btn btn-danger btn-sm" onclick="switchTransporterTab('emergency-sos'); openDriverSOSModal();" style="background: #dc2626; border-color: #dc2626; font-weight: 800;" data-i18n="btnSosTop">
+            🚨 SOS Emergency
           </button>
         </div>
       </header>
 
-      <!-- DYNAMIC CONTENT CONTAINER (SINGLE-MODULE DISPLAY) -->
-      <div class="dashboard-content">
-<section class="transporter-module-view" id="view-active-mission">
+      <!-- DYNAMIC TABBED MODULE VIEW CONTENT -->
+      <div class="dashboard-content" style="padding: 24px;">
+        
+        <!-- ==================================================== -->
+        <!-- MODULE 1: ACTIVE MISSION & MAP                       -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-active-mission">
           
           <!-- 1. ACTIVE DISPATCH MISSION HERO -->
           <div class="mission-highlight-card" id="active-navigator-section">
@@ -517,7 +329,12 @@
           </div>
 
         </section>
-<section class="transporter-module-view" id="view-duty-profile" style="display: none;">
+
+
+        <!-- ==================================================== -->
+        <!-- MODULE 2: DUTY STATUS & DRIVER PROFILE               -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-duty-profile" style="display: none;">
           
           <div class="view-banner-header">
             <div class="view-banner-title">
@@ -627,7 +444,12 @@
           </div>
 
         </section>
-<section class="transporter-module-view" id="view-earnings-wallet" style="display: none;">
+
+
+        <!-- ==================================================== -->
+        <!-- MODULE 3: EARNINGS & INSTANT UPI PAYOUT              -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-earnings-wallet" style="display: none;">
           
           <div class="view-banner-header">
             <div class="view-banner-title">
@@ -721,7 +543,12 @@
           </div>
 
         </section>
-<section class="transporter-module-view" id="view-nearby-loads" style="display: none;">
+
+
+        <!-- ==================================================== -->
+        <!-- MODULE 4: NEARBY LOAD BROADCASTS (DISPATCH BOARD)     -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-nearby-loads" style="display: none;">
           
           <div class="view-banner-header">
             <div class="view-banner-title">
@@ -784,7 +611,12 @@
           </div>
 
         </section>
-<section class="transporter-module-view" id="view-pod-handover" style="display: none;">
+
+
+        <!-- ==================================================== -->
+        <!-- MODULE 5: PROOF OF DELIVERY (POD) HANDOVER TERMINAL  -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-pod-handover" style="display: none;">
           
           <div class="view-banner-header">
             <div class="view-banner-title">
@@ -854,7 +686,12 @@
           </div>
 
         </section>
-<section class="transporter-module-view" id="view-emergency-sos" style="display: none;">
+
+
+        <!-- ==================================================== -->
+        <!-- MODULE 6: 24/7 ROADSIDE EMERGENCY SOS                -->
+        <!-- ==================================================== -->
+        <section class="transporter-module-view" id="view-emergency-sos" style="display: none;">
           
           <div class="view-banner-header">
             <div class="view-banner-title">
@@ -925,46 +762,13 @@
 
         </section>
 
-        <!-- ==================================================== -->
-        <!-- MODULE 7: NEARBY EV CHARGING STATIONS (EV EXCLUSIVE) -->
-        <!-- ==================================================== -->
-        <section class="transporter-module-view" id="view-ev-charging" style="display: none;">
-          <div class="view-banner-header" style="background: linear-gradient(135deg, #064e3b 0%, #059669 100%);">
-            <div>
-              <span class="badge" style="background: rgba(255,255,255,0.2); color: #fff; font-weight: 800;">EXCLUSIVE EV INFRASTRUCTURE</span>
-              <h2 style="margin: 8px 0 4px 0; font-size: 1.45rem; font-weight: 800; color: #fff;">Nearby EV Charging Stations</h2>
-              <div style="font-size: 0.88rem; color: rgba(255,255,255,0.9);">Verified DC fast-charging bays & agricultural highway EV corridors along NH 544 & Erode/Coimbatore.</div>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="btn btn-sm" onclick="detectCurrentLocationChargers()" style="background: #fff; color: #064e3b; font-weight: 800;">
-                📍 Detect My Location
-              </button>
-            </div>
-          </div>
-
-          <div class="card" style="margin-bottom: 20px; padding: 14px;">
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="search-ev-chargers" class="form-control" placeholder="Search by station name, highway sector, or plug type (CCS2, Bharat DC)..." oninput="handleSearchChargingStations()" style="flex: 1; min-width: 260px;" />
-              <button class="btn btn-primary btn-sm" onclick="handleSearchChargingStations()" style="background: #059669; border-color: #059669; font-weight: 700;">
-                🔍 Search Chargers
-              </button>
-            </div>
-          </div>
-
-          <!-- Charging Stations Grid -->
-          <div id="ev-charging-stations-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
-            <!-- Rendered dynamically by renderEVChargingStations() -->
-          </div>
-        </section>
-
       </div>
     </main>
-  </div>
 
-  <!-- ==================================================== -->
-  <!-- 3. MODALS                                            -->
-  <!-- ==================================================== -->
-<div class="modal-overlay modal-backdrop" id="modal-driver-sos">
+    <!-- ==================================================== -->
+    <!-- MODAL: EMERGENCY SOS & ROADSIDE ASSISTANCE           -->
+    <!-- ==================================================== -->
+    <div class="modal-overlay modal-backdrop" id="modal-driver-sos">
       <div class="modal-box modal-dialog">
         <div class="modal-header">
           <div class="modal-title" style="color: #dc2626;" data-i18n="sosModalTitle">🚨 Highway Emergency SOS & Breakdown Support</div>
@@ -989,7 +793,16 @@
             </button>
           </div>
         </div>
-<div class="modal-overlay modal-backdrop" id="modal-pod-verification">
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-driver-sos')" data-i18n="btnClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- MODAL: DIGITAL POD & RECEIVER SIGNATURE             -->
+    <!-- ==================================================== -->
+    <div class="modal-overlay modal-backdrop" id="modal-pod-verification">
       <div class="modal-box modal-dialog">
         <div class="modal-header">
           <div class="modal-title" data-i18n="podModalTitle">✍️ Digital Proof of Delivery (POD) Handover</div>
@@ -1006,116 +819,46 @@
             <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;" data-i18n="subOtpHelp">Ask the APMC Mandi Receiver at Gate #2 for their 4-digit confirmation OTP.</div>
           </div>
 
-  <!-- MODAL: CUSTOMER CONSIGNMENT BOOKING -->
-  <div class="modal-overlay modal-backdrop" id="modal-customer-booking" style="display: none;">
-    <div class="modal-box modal-dialog" style="max-width: 620px;">
-      <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.4rem;">📦</span>
-          <h3 class="modal-title" style="color: #0c5a36;">Book Agricultural Cargo</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" data-i18n="lblCratesIntact">Crates Delivered Intact *</label>
+              <input type="text" class="form-control" value="48 Crates (1.2 Tonnes)" readonly style="background: #f8fafc;" data-i18n="valCratesIntact" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="lblDock">Unloading Dock</label>
+              <input type="text" class="form-control" value="Coimbatore Gate #2" readonly style="background: #f8fafc;" data-i18n="valDock" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="lblReceiverSig">Mandi Receiver Signature (Touchscreen)</label>
+            <div class="signature-box-wrapper">
+              <canvas id="pod-signature-canvas" style="background:#fff; border:1px solid #cbd5e1; border-radius:4px; width:100%; height:120px; touch-action:none;"></canvas>
+              <button type="button" class="btn btn-outline btn-sm clear-sig-btn" onclick="clearDriverSignature()" data-i18n="btnClearSig">Clear Signature</button>
+            </div>
+          </div>
         </div>
-        <button class="modal-close-btn" onclick="closeModal('modal-customer-booking')">&times;</button>
-      </div>
 
-      <div class="modal-body">
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 16px;">
-          Choose vehicle type and consignment weight. Bookings are automatically validated and routed to the matching fleet queue.
-        </p>
-
-        <!-- Dynamic Validation Error Alert Banner -->
-        <div id="booking-validation-error" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 8px; padding: 12px; font-size: 0.82rem; font-weight: 700; margin-bottom: 14px;"></div>
-
-        <form id="customer-booking-form" onsubmit="submitCustomerBooking(event)">
-          <!-- Vehicle Selector -->
-          <div class="form-group" style="margin-bottom: 14px;">
-            <label class="form-label" style="font-weight: 700;">Select Vehicle Category *</label>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px;">
-              <label style="border: 2px solid #bbf7d0; background: #f0fdf4; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer;">
-                <input type="radio" name="book-vehicle-type" value="TRUCK" checked style="margin-bottom: 4px;" />
-                <div style="font-weight: 800; color: #0c5a36; font-size: 0.9rem;">🚚 Truck</div>
-                <div style="font-size: 0.72rem; color: #15803d;">> 100 kg & Tonnes</div>
-              </label>
-              <label style="border: 2px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer;">
-                <input type="radio" name="book-vehicle-type" value="NORMAL" style="margin-bottom: 4px;" />
-                <div style="font-weight: 800; color: #1d4ed8; font-size: 0.9rem;">🚗 Normal</div>
-                <div style="font-size: 0.72rem; color: #2563eb;">10 kg – 100 kg</div>
-              </label>
-              <label style="border: 2px solid #a7f3d0; background: #ecfdf5; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer;">
-                <input type="radio" name="book-vehicle-type" value="EV" style="margin-bottom: 4px;" />
-                <div style="font-weight: 800; color: #059669; font-size: 0.9rem;">⚡ EV</div>
-                <div style="font-size: 0.72rem; color: #059669;">10 kg – 30 kg</div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Cargo Weight & Unit -->
-          <div class="form-row" style="display: flex; gap: 12px; margin-bottom: 14px;">
-            <div class="form-group" style="flex: 2;">
-              <label class="form-label" style="font-weight: 700;">Cargo Weight *</label>
-              <input type="number" step="0.1" id="book-weight-input" class="form-control" placeholder="e.g. 2.5 or 45" required />
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" style="font-weight: 700;">Unit</label>
-              <select id="book-unit-select" class="form-control" style="height: 42px;">
-                <option value="kg">kg</option>
-                <option value="tonnes" selected>Tonnes</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Cargo Description -->
-          <div class="form-group" style="margin-bottom: 14px;">
-            <label class="form-label" style="font-weight: 700;">Cargo Item / Description *</label>
-            <input type="text" id="book-item-input" class="form-control" placeholder="e.g. Fresh Tomatoes, Paddy Bags, Hill Strawberries" required />
-          </div>
-
-          <!-- Locations -->
-          <div class="form-row" style="display: flex; gap: 12px; margin-bottom: 14px;">
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" style="font-weight: 700;">Pickup Farmgate *</label>
-              <input type="text" id="book-pickup-input" class="form-control" placeholder="e.g. Thindal Farmgate Point" required />
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" style="font-weight: 700;">Delivery Mandi *</label>
-              <input type="text" id="book-delivery-input" class="form-control" placeholder="e.g. Coimbatore APMC Yard Gate 2" required />
-            </div>
-          </div>
-
-          <!-- Customer Details -->
-          <div class="form-row" style="display: flex; gap: 12px; margin-bottom: 18px;">
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" style="font-weight: 700;">Farmer / Shipper Name</label>
-              <input type="text" id="book-cust-name" class="form-control" placeholder="e.g. Ravi Kumar" />
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label" style="font-weight: 700;">Phone Number</label>
-              <input type="tel" id="book-cust-phone" class="form-control" placeholder="+91 98421 11201" />
-            </div>
-          </div>
-
-          <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn btn-outline" onclick="closeModal('modal-customer-booking')">Cancel</button>
-            <button type="submit" id="btn-submit-customer-booking" class="btn btn-primary" style="background: #0c5a36; border-color: #0c5a36; font-weight: 800;">
-              🚀 Dispatch Consignment
-            </button>
-          </div>
-        </form>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('modal-pod-verification')" data-i18n="btnCancel">Cancel</button>
+          <button class="btn btn-primary" onclick="submitDriverPODVerification()" style="background: #0c5a36; border-color: #0c5a36; font-weight: 800;" data-i18n="btnCompleteDelivery">
+            ✅ Complete Delivery & Collect ₹1,650
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
+  </div>
 
   <!-- APPLICATION SCRIPTS -->
   <script src="js/data.js"></script>
   <script src="js/calculator.js"></script>
   <script src="js/tracking.js"></script>
   <script src="js/i18n.js"></script>
-  <script src="js/booking-store.js"></script>
   <script src="js/logistics.js"></script>
   <script src="js/driver-controller.js"></script>
-  <script src="js/vehicle-dashboard-controller.js"></script>
 
-  <!-- UNIFIED TRANSIT & ROLE DISPATCH ROUTER -->
+  <!-- TAB SWITCHING LOGIC -->
   <script>
     /**
      * Switch Transporter Module View:
@@ -1144,7 +887,7 @@
         activeView.style.display = 'block';
       }
 
-      // 3. Scroll to top smoothly
+      // 3. Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       // 4. Invalidate map size so Leaflet / Google Maps renders smoothly
@@ -1164,21 +907,14 @@
         }, 120);
       }
 
-      // 5. If POD tab, setup inline signature pad
+      // 5. If POD tab, setup inline signature pad if needed
       if (tabId === 'pod-handover') {
         setTimeout(function() {
           setupInlinePODSignature();
         }, 100);
       }
 
-      // 6. If EV charging tab, render stations
-      if (tabId === 'ev-charging') {
-        if (typeof renderEVChargingStations === 'function') {
-          renderEVChargingStations();
-        }
-      }
-
-      // 7. Save state to URL hash
+      // 6. Save state to URL hash
       try {
         if (window.history && window.history.replaceState) {
           window.history.replaceState(null, null, '#' + tabId);
@@ -1192,6 +928,7 @@
       inlineSigCanvas = document.getElementById('pod-inline-signature');
       if (!inlineSigCanvas) return;
 
+      // Handle responsive high-DPI sizing
       const rect = inlineSigCanvas.getBoundingClientRect();
       inlineSigCanvas.width = rect.width || 400;
       inlineSigCanvas.height = 140;
@@ -1278,105 +1015,28 @@
       }, 1000);
     }
 
-    // Role Login & Adaptation Handler
-    function loginAsRole(roleKey) {
-      if (typeof AuthSession !== 'undefined') {
-        AuthSession.setRole(roleKey);
-      }
-
-      // Hide Gateway Screen
-      const gateway = document.getElementById('login-gateway-screen');
-      if (gateway) gateway.style.display = 'none';
-
-      // Update Top Role Badge
-      const topBadge = document.getElementById('top-role-badge');
-      const subtitle = document.getElementById('sidebar-role-subtitle');
-      const evNav = document.getElementById('nav-item-ev-charging');
-
-      if (roleKey === 'TRUCK') {
-        if (topBadge) {
-          topBadge.style.background = '#e8f5ed';
-          topBadge.style.color = '#0c5a36';
-          topBadge.style.borderColor = '#bbf7d0';
-          topBadge.innerHTML = '🚚 Heavy Truck · Tata Ace 1.5T · TN-33-AX-8910 (> 100 kg / Tonnes)';
-        }
-        if (subtitle) subtitle.textContent = 'Truck Fleet Console';
-        if (evNav) evNav.style.display = 'none';
-      } else if (roleKey === 'NORMAL') {
-        if (topBadge) {
-          topBadge.style.background = '#eff6ff';
-          topBadge.style.color = '#1d4ed8';
-          topBadge.style.borderColor = '#bfdbfe';
-          topBadge.innerHTML = '🚗 Normal Vehicle · Mahindra Bolero · TN-33-BZ-4521 (10 kg – 100 kg)';
-        }
-        if (subtitle) subtitle.textContent = 'Normal Fleet Console';
-        if (evNav) evNav.style.display = 'none';
-      } else if (roleKey === 'EV') {
-        if (topBadge) {
-          topBadge.style.background = '#ecfdf5';
-          topBadge.style.color = '#059669';
-          topBadge.style.borderColor = '#a7f3d0';
-          topBadge.innerHTML = '⚡ EV Vehicle · Tata Ace EV · TN-33-EV-7721 (10 kg – 30 kg)';
-        }
-        if (subtitle) subtitle.textContent = 'EV Eco-Fleet Console';
-        if (evNav) evNav.style.display = 'flex';
-      }
-
-      // Update profile in sidebar footer
-      if (typeof AuthSession !== 'undefined') {
-        const prof = AuthSession.getDriverProfile(roleKey);
-        const mName = document.getElementById('mini-name');
-        const mVeh = document.getElementById('mini-vehicle');
-        const mAv = document.getElementById('mini-avatar');
-        if (mName) mName.textContent = prof.name;
-        if (mVeh) mVeh.textContent = `${prof.vehicle} · ${prof.regNumber}`;
-        if (mAv) mAv.textContent = prof.avatarInitials;
-      }
-
-      // Update Nearby Loads for role
-      if (typeof renderRoleNearbyLoads === 'function') {
-        renderRoleNearbyLoads(roleKey);
-      }
-
-      // Update Duty & Profile fields
-      if (typeof updateDutyProfileRoleData === 'function') {
-        updateDutyProfileRoleData(roleKey);
-      }
-
-      // Switch to Active Mission
-      switchTransporterTab('active-mission');
-    }
-
-    function showLoginGateway() {
-      const gateway = document.getElementById('login-gateway-screen');
-      if (gateway) gateway.style.display = 'flex';
-      if (typeof AuthSession !== 'undefined') {
-        AuthSession.setRole(null);
-      }
-    }
-
-    // Expose globals
+    // Expose functions globally
     window.switchTransporterTab = switchTransporterTab;
     window.clearInlinePODSignature = clearInlinePODSignature;
     window.submitInlinePODVerification = submitInlinePODVerification;
-    window.loginAsRole = loginAsRole;
-    window.showLoginGateway = showLoginGateway;
 
-    // Load initialization
+    // Initial tab router based on URL hash
     window.addEventListener('load', function() {
-      let saved = null;
-      try {
-        saved = localStorage.getItem('agrinex_active_session_role');
-      } catch(e) {}
-
-      if (saved) {
-        loginAsRole(saved);
+      const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+      if (hash && document.getElementById('view-' + hash)) {
+        switchTransporterTab(hash);
       } else {
-        showLoginGateway();
+        switchTransporterTab('active-mission');
+      }
+    });
+
+    window.addEventListener('hashchange', function() {
+      const hash = window.location.hash ? window.location.hash.replace('#', '') : '';
+      if (hash && document.getElementById('view-' + hash)) {
+        switchTransporterTab(hash);
       }
     });
   </script>
 
 </body>
 </html>
-
